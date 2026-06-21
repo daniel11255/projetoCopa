@@ -49,6 +49,7 @@
         <button id="btn-stats" class="btn-icon" title="Estatísticas">📊</button>
         <button id="btn-history-btn" class="btn-icon" title="Histórico">📜</button>
         <button id="btn-ranking-game" class="btn-icon" title="Ranking">🏅</button>
+        <button id="btn-new-player" class="btn-icon btn-icon-danger" title="Novo jogador">👤</button>
       </div>
     </header>
 
@@ -96,48 +97,34 @@
       <button id="btn-spin" class="btn btn-spin">Girar</button>
     </div>
 
-    <!-- Result Controls (hidden until roulette stops) -->
+    <!-- Result Controls (sub-aba após o sorteio) -->
     <div class="result-controls hidden" id="result-controls">
 
-      <!-- Mini Spotlight da Bandeira Sorteada -->
-      <div class="flag-spotlight" id="flag-spotlight">
-        <div class="spotlight-flag-wrap">
-          <img id="spotlight-flag-img" src="" alt="" />
+      <!-- FASE 1: Pergunta – bandeira grande + acertou/errou -->
+      <div class="result-phase" id="phase-question">
+        <div class="flag-stage">
+          <div class="flag-stage-glow"></div>
+          <img id="spotlight-flag-img" src="" alt="" class="flag-stage-img" />
         </div>
-        <div class="spotlight-info">
+        <div class="flag-stage-meta">
           <span class="spotlight-badge" id="spotlight-badge">Sorteio #1</span>
           <span class="spotlight-remaining" id="spotlight-remaining">47 restantes</span>
         </div>
-      </div>
-
-      <!-- Country Reveal -->
-      <div class="reveal-section">
-        <div class="country-name-wrapper">
-          <div id="country-name-blur" class="country-name-blur">██████████</div>
-          <div id="country-name-reveal" class="country-name-reveal hidden"></div>
+        <div class="answer-section">
+          <button id="btn-correct" class="btn btn-correct">✅ Acertou</button>
+          <button id="btn-wrong" class="btn btn-wrong">❌ Errou</button>
         </div>
-        <button id="btn-reveal" class="btn btn-reveal">
-          Mostrar nome da bandeira
-        </button>
       </div>
 
-      <!-- Answer Buttons -->
-      <div class="answer-section">
-        <button id="btn-correct" class="btn btn-correct" disabled>
-          ✅ Acertou
-        </button>
-        <button id="btn-wrong" class="btn btn-wrong" disabled>
-          ❌ Errou
-        </button>
-      </div>
-
-      <!-- Navigation Buttons -->
-      <div class="nav-section">
-        <button id="btn-spin-again" class="btn btn-outline-sm">
+      <!-- FASE 2: Resposta – nome revelado + girar novamente -->
+      <div class="result-phase hidden" id="phase-answer">
+        <div class="feedback-card" id="feedback-card">
+          <div class="feedback-icon" id="feedback-icon">✅</div>
+          <div class="feedback-country" id="feedback-country">BRASIL</div>
+          <div class="feedback-label">Era essa a bandeira!</div>
+        </div>
+        <button id="btn-spin-again" class="btn btn-spin">
           Girar novamente
-        </button>
-        <button id="btn-new-player" class="btn btn-outline-sm">
-          👤 Novo jogador
         </button>
       </div>
 

@@ -93,8 +93,6 @@ const state = {
   totalSpins:    0,
   currentWinner: null,
   startTime:     null,
-  pausedAt:      null,   // timestamp em que o timer foi pausado
-  totalPausedMs: 0,      // ms totais de pausa acumulados
   soundEnabled:  true,
   spinning:      false,
   revealed:      false,
@@ -241,20 +239,7 @@ function formatDate(ts) {
 }
 
 function getElapsedSeconds() {
-  // Desconta tempo pausado (quando nome está revelado)
-  const pausedMs = state.totalPausedMs + (state.pausedAt ? Date.now() - state.pausedAt : 0);
-  return Math.floor((Date.now() - state.startTime - pausedMs) / 1000);
-}
-
-function pauseTimer() {
-  if (!state.pausedAt) state.pausedAt = Date.now();
-}
-
-function resumeTimer() {
-  if (state.pausedAt) {
-    state.totalPausedMs += Date.now() - state.pausedAt;
-    state.pausedAt = null;
-  }
+  return Math.floor((Date.now() - state.startTime) / 1000);
 }
 
 // =====================================================
@@ -551,7 +536,11 @@ function showResultControls() {
   document.getElementById('game-controls').classList.add('hidden');
   document.getElementById('result-controls').classList.remove('hidden');
 
-  // Atualiza spotlight da bandeira sorteada
+  // Mostra fase-pergunta, oculta fase-resposta
+  document.getElementById('phase-question').classList.remove('hidden');
+  document.getElementById('phase-answer').classList.add('hidden');
+
+  // Atualiza imagem e badges da bandeira sorteada
   const winner = state.currentWinner;
   document.getElementById('spotlight-flag-img').src = getFlagUrl(winner.code);
   document.getElementById('spotlight-flag-img').alt = winner.name;
@@ -559,20 +548,21 @@ function showResultControls() {
   document.getElementById('spotlight-remaining').textContent =
     `${state.remaining.length} ${state.remaining.length === 1 ? 'restante' : 'restantes'}`;
 
-  // Reset visual
-  document.getElementById('country-name-blur').classList.remove('hidden');
-  document.getElementById('country-name-reveal').classList.add('hidden');
-  document.getElementById('country-name-reveal').textContent = '';
+  // Botões habilitados imediatamente (sem etapa de revelar)
+  document.getElementById('btn-correct').disabled = false;
+  document.getElementById('btn-wrong').disabled   = false;
+}
 
-  const btnReveal  = document.getElementById('btn-reveal');
-  const btnCorrect = document.getElementById('btn-correct');
-  const btnWrong   = document.getElementById('btn-wrong');
+/** Exibe a fase-resposta com feedback e nome do país */
+function showPhaseAnswer(result) {
+  document.getElementById('phase-question').classList.add('hidden');
+  const phaseAnswer = document.getElementById('phase-answer');
+  phaseAnswer.classList.remove('hidden');
 
-  btnReveal.classList.remove('revealed');
-  btnReveal.textContent = 'Mostrar nome da bandeira';
-  btnReveal.disabled = false;
-  btnCorrect.disabled = true;
-  btnWrong.disabled   = true;
+  const card = document.getElementById('feedback-card');
+  card.className = 'feedback-card ' + (result === 'correct' ? 'is-correct' : 'is-wrong');
+  document.getElementById('feedback-icon').textContent    = result === 'correct' ? '✅' : '❌';
+  document.getElementById('feedback-country').textContent = state.currentWinner.name.toUpperCase();
 }
 
 function updateInfoBar() {
@@ -584,12 +574,8 @@ function updateInfoBar() {
 }
 
 function prepareNewSpin() {
-  resumeTimer(); // retoma contagem ao girar novamente
   hideResultControls();
-
-  // Remove destaque de vencedor
   document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
-
   setSpinButtonEnabled(true);
 }
 
@@ -883,11 +869,9 @@ function startGame(name) {
   state.bestStreak  = 0;
   state.totalSpins  = 0;
   state.currentWinner = null;
-  state.revealed      = false;
-  state.answered      = false;
-  state.startTime     = Date.now();
-  state.pausedAt      = null;
-  state.totalPausedMs = 0;
+  state.revealed  = false;
+  state.answered  = false;
+  state.startTime = Date.now();
 
   // Mostra tela de jogo
   document.getElementById('screen-welcome').classList.remove('active');
@@ -912,7 +896,7 @@ function returnToWelcome() {
   document.getElementById('screen-welcome').classList.add('active');
 
   // Fecha todos os modais
-  ['modal-stats', 'modal-ranking', 'modal-history', 'modal-gameover'].forEach(closeModal);
+  ['modal-stats', 'modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
 }
 
 // =====================================================
@@ -975,26 +959,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ----- Controles de resultado -----
-  document.getElementById('btn-reveal').addEventListener('click', () => {
-    if (state.revealed) return;
-    state.revealed = true;
-    pauseTimer(); // para o timer enquanto o nome está visível
-
-    document.getElementById('country-name-blur').classList.add('hidden');
-    const reveal = document.getElementById('country-name-reveal');
-    reveal.textContent = state.currentWinner.name.toUpperCase();
-    reveal.classList.remove('hidden');
-
-    document.getElementById('btn-reveal').classList.add('revealed');
-    document.getElementById('btn-reveal').textContent = '✅ Nome revelado';
-    document.getElementById('btn-reveal').disabled = true;
-
-    document.getElementById('btn-correct').disabled = false;
-    document.getElementById('btn-wrong').disabled   = false;
-  });
-
   document.getElementById('btn-correct').addEventListener('click', () => {
-    if (!state.revealed || state.answered) return;
+    if (state.answered) return;
     state.answered = true;
     state.correct++;
     state.streak++;
@@ -1010,13 +976,11 @@ document.addEventListener('DOMContentLoaded', () => {
     playCorrectSound();
     vibrate([50, 30, 100]);
     launchConfetti();
-
-    document.getElementById('btn-correct').disabled = true;
-    document.getElementById('btn-wrong').disabled   = true;
+    showPhaseAnswer('correct');
   });
 
   document.getElementById('btn-wrong').addEventListener('click', () => {
-    if (!state.revealed || state.answered) return;
+    if (state.answered) return;
     state.answered = true;
     state.wrong++;
     state.streak = 0;
@@ -1030,32 +994,25 @@ document.addEventListener('DOMContentLoaded', () => {
     updateInfoBar();
     playWrongSound();
     vibrate([200]);
+    showPhaseAnswer('wrong');
 
-    document.getElementById('btn-correct').disabled = true;
-    document.getElementById('btn-wrong').disabled   = true;
-
-    // Abre modal de errou com estatísticas + comparação de ranking
+    // Abre modal com estatísticas + comparação de ranking
     setTimeout(() => {
       renderWrongModal();
       openModal('modal-wrong');
-    }, 350);
+    }, 400);
   });
 
   document.getElementById('btn-spin-again').addEventListener('click', () => {
-    // Registra como "pulado" se não respondeu
-    if (state.currentWinner && !state.answered) {
-      state.history.push({
-        team:   state.currentWinner,
-        result: 'skip',
-        time:   new Date().toLocaleTimeString('pt-BR'),
-      });
-    }
     prepareNewSpin();
     if (state.remaining.length === 0) { showGameOver(); return; }
+    doSpin(); // gira imediatamente, sem precisar clicar em "Girar"
   });
 
+  // Novo jogador (header) – salva ranking no localStorage antes de sair
   document.getElementById('btn-new-player').addEventListener('click', () => {
-    if (confirm('Deseja voltar à tela inicial? O progresso da partida será perdido.')) {
+    if (confirm('Deseja trocar de jogador? Seu progresso será salvo no ranking.')) {
+      if (state.playerName) updateRanking();
       returnToWelcome();
     }
   });
