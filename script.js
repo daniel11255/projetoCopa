@@ -92,11 +92,13 @@ const state = {
   bestStreak:    0,
   totalSpins:    0,
   currentWinner: null,
-  startTime:     null,
-  soundEnabled:  true,
-  spinning:      false,
-  revealed:      false,
-  answered:      false,
+  startTime:      null,  // definido no PRIMEIRO spin (não ao iniciar o jogo)
+  pausedAt:       null,  // instante em que o timer foi pausado
+  totalPausedMs:  0,     // total de ms pausados
+  soundEnabled:   true,
+  spinning:       false,
+  revealed:       false,
+  answered:       false,
 };
 
 // =====================================================
@@ -239,7 +241,20 @@ function formatDate(ts) {
 }
 
 function getElapsedSeconds() {
-  return Math.floor((Date.now() - state.startTime) / 1000);
+  if (!state.startTime) return 0;
+  const pausedMs = state.totalPausedMs + (state.pausedAt ? Date.now() - state.pausedAt : 0);
+  return Math.floor((Date.now() - state.startTime - pausedMs) / 1000);
+}
+
+function pauseTimer() {
+  if (!state.pausedAt) state.pausedAt = Date.now();
+}
+
+function resumeTimer() {
+  if (state.pausedAt) {
+    state.totalPausedMs += Date.now() - state.pausedAt;
+    state.pausedAt = null;
+  }
 }
 
 // =====================================================
@@ -449,14 +464,19 @@ function highlightWinner(teamId) {
 /** Executa o giro da roleta */
 function doSpin() {
   if (state.spinning) return;
+  if (state.remaining.length === 0) { showGameOver(); return; }
 
-  // Se o último sorteio ainda não foi respondido, spin direto
-  // (o botão "Girar novamente" chama prepareNewSpin antes)
-
-  if (state.remaining.length === 0) {
-    showGameOver();
-    return;
+  // Inicia o timer apenas no primeiro giro
+  if (!state.startTime) {
+    state.startTime = Date.now();
+    startTimer();
+  } else {
+    resumeTimer(); // retoma após pausa
   }
+
+  // Limpa estado visual do sorteio anterior
+  document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
+  hideResultControls();
 
   // Escolhe o vencedor
   const winner = state.remaining[Math.floor(Math.random() * state.remaining.length)];
@@ -516,7 +536,8 @@ function onSpinComplete(winner) {
   highlightWinner(winner.id);
   updateInfoBar();
   showResultControls();
-  startIdle(); // volta a rolar devagar
+  pauseTimer();    // pausa enquanto jogador decide
+  startIdle();     // volta a rolar devagar
 }
 
 // =====================================================
@@ -536,11 +557,7 @@ function showResultControls() {
   document.getElementById('game-controls').classList.add('hidden');
   document.getElementById('result-controls').classList.remove('hidden');
 
-  // Mostra fase-pergunta, oculta fase-resposta
-  document.getElementById('phase-question').classList.remove('hidden');
-  document.getElementById('phase-answer').classList.add('hidden');
-
-  // Atualiza imagem e badges da bandeira sorteada
+  // Atualiza imagem e badges
   const winner = state.currentWinner;
   document.getElementById('spotlight-flag-img').src = getFlagUrl(winner.code);
   document.getElementById('spotlight-flag-img').alt = winner.name;
@@ -548,21 +565,25 @@ function showResultControls() {
   document.getElementById('spotlight-remaining').textContent =
     `${state.remaining.length} ${state.remaining.length === 1 ? 'restante' : 'restantes'}`;
 
-  // Botões habilitados imediatamente (sem etapa de revelar)
-  document.getElementById('btn-correct').disabled = false;
-  document.getElementById('btn-wrong').disabled   = false;
-}
+  // Reset do nome
+  document.getElementById('country-name-blur').classList.remove('hidden');
+  document.getElementById('country-name-reveal').classList.add('hidden');
+  document.getElementById('country-name-reveal').textContent = '';
 
-/** Exibe a fase-resposta com feedback e nome do país */
-function showPhaseAnswer(result) {
-  document.getElementById('phase-question').classList.add('hidden');
-  const phaseAnswer = document.getElementById('phase-answer');
-  phaseAnswer.classList.remove('hidden');
+  // Reset botão revelar
+  const btnReveal = document.getElementById('btn-reveal');
+  btnReveal.textContent = 'Mostrar nome da bandeira';
+  btnReveal.classList.remove('revealed');
+  btnReveal.disabled = false;
 
-  const card = document.getElementById('feedback-card');
-  card.className = 'feedback-card ' + (result === 'correct' ? 'is-correct' : 'is-wrong');
-  document.getElementById('feedback-icon').textContent    = result === 'correct' ? '✅' : '❌';
-  document.getElementById('feedback-country').textContent = state.currentWinner.name.toUpperCase();
+  // Acertou/Errou bloqueados até revelar
+  document.getElementById('btn-correct').disabled = true;
+  document.getElementById('btn-wrong').disabled   = true;
+
+  // Oculta feedback anterior
+  const fb = document.getElementById('answer-feedback');
+  fb.className = 'answer-feedback-inline hidden';
+  fb.textContent = '';
 }
 
 function updateInfoBar() {
@@ -574,6 +595,7 @@ function updateInfoBar() {
 }
 
 function prepareNewSpin() {
+  // doSpin() já faz a limpeza; esta função fica para uso externo (botão Girar principal)
   hideResultControls();
   document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
   setSpinButtonEnabled(true);
@@ -677,7 +699,7 @@ function renderStats() {
       </div>
       <div class="stat-card full-width">
         <div class="stat-label">Partida iniciada em</div>
-        <div class="stat-value" style="font-size:15px">${formatDate(state.startTime)}</div>
+        <div class="stat-value" style="font-size:15px">${state.startTime ? formatDate(state.startTime) : 'Ainda não iniciada'}</div>
       </div>
     </div>
   `;
@@ -869,9 +891,11 @@ function startGame(name) {
   state.bestStreak  = 0;
   state.totalSpins  = 0;
   state.currentWinner = null;
-  state.revealed  = false;
-  state.answered  = false;
-  state.startTime = Date.now();
+  state.revealed      = false;
+  state.answered      = false;
+  state.startTime     = null;   // inicia no primeiro giro
+  state.pausedAt      = null;
+  state.totalPausedMs = 0;
 
   // Mostra tela de jogo
   document.getElementById('screen-welcome').classList.remove('active');
@@ -882,7 +906,7 @@ function startGame(name) {
   updateInfoBar();
   buildStrip();
   startIdle();
-  startTimer();
+  // startTimer() é chamado no primeiro doSpin()
   setSpinButtonEnabled(true);
   hideResultControls();
 }
@@ -921,6 +945,20 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => inputName.style.borderColor = '', 1500);
       return;
     }
+
+    // Verifica nome duplicado no ranking
+    const ranking = loadRanking();
+    const exists  = ranking.find(r => r.name.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      const continuar = confirm(
+        `⚠️ O nome "${name}" já existe no ranking.\n\nDeseja continuar jogando como "${name}"?\n(Seus acertos serão somados ao histórico existente)\n\nClique em Cancelar para escolher outro nome.`
+      );
+      if (!continuar) {
+        inputName.select();
+        return;
+      }
+    }
+
     startGame(name);
   });
 
@@ -958,9 +996,28 @@ document.addEventListener('DOMContentLoaded', () => {
     doSpin();
   });
 
+  // ----- Revelar nome da bandeira -----
+  document.getElementById('btn-reveal').addEventListener('click', () => {
+    if (state.revealed) return;
+    state.revealed = true;
+
+    document.getElementById('country-name-blur').classList.add('hidden');
+    const reveal = document.getElementById('country-name-reveal');
+    reveal.textContent = state.currentWinner.name.toUpperCase();
+    reveal.classList.remove('hidden');
+
+    const btnReveal = document.getElementById('btn-reveal');
+    btnReveal.textContent = '✅ Nome revelado';
+    btnReveal.classList.add('revealed');
+    btnReveal.disabled = true;
+
+    document.getElementById('btn-correct').disabled = false;
+    document.getElementById('btn-wrong').disabled   = false;
+  });
+
   // ----- Controles de resultado -----
   document.getElementById('btn-correct').addEventListener('click', () => {
-    if (state.answered) return;
+    if (!state.revealed || state.answered) return;
     state.answered = true;
     state.correct++;
     state.streak++;
@@ -976,11 +1033,16 @@ document.addEventListener('DOMContentLoaded', () => {
     playCorrectSound();
     vibrate([50, 30, 100]);
     launchConfetti();
-    showPhaseAnswer('correct');
+
+    document.getElementById('btn-correct').disabled = true;
+    document.getElementById('btn-wrong').disabled   = true;
+    const fb = document.getElementById('answer-feedback');
+    fb.textContent = '✅ Acerto registrado!';
+    fb.className = 'answer-feedback-inline is-correct';
   });
 
   document.getElementById('btn-wrong').addEventListener('click', () => {
-    if (state.answered) return;
+    if (!state.revealed || state.answered) return;
     state.answered = true;
     state.wrong++;
     state.streak = 0;
@@ -994,26 +1056,42 @@ document.addEventListener('DOMContentLoaded', () => {
     updateInfoBar();
     playWrongSound();
     vibrate([200]);
-    showPhaseAnswer('wrong');
 
-    // Abre modal com estatísticas + comparação de ranking
-    setTimeout(() => {
-      renderWrongModal();
-      openModal('modal-wrong');
-    }, 400);
+    document.getElementById('btn-correct').disabled = true;
+    document.getElementById('btn-wrong').disabled   = true;
+    const fb = document.getElementById('answer-feedback');
+    fb.textContent = '❌ Erro registrado!';
+    fb.className = 'answer-feedback-inline is-wrong';
+
+    // Modal com estatísticas + comparativo
+    setTimeout(() => { renderWrongModal(); openModal('modal-wrong'); }, 450);
   });
 
+  // Girar novamente – gira direto sem precisar clicar em "Girar"
   document.getElementById('btn-spin-again').addEventListener('click', () => {
-    prepareNewSpin();
-    if (state.remaining.length === 0) { showGameOver(); return; }
-    doSpin(); // gira imediatamente, sem precisar clicar em "Girar"
+    doSpin();
   });
 
-  // Novo jogador (header) – salva ranking no localStorage antes de sair
+  // Novo jogador (header) – salva ranking antes de sair
   document.getElementById('btn-new-player').addEventListener('click', () => {
     if (confirm('Deseja trocar de jogador? Seu progresso será salvo no ranking.')) {
       if (state.playerName) updateRanking();
       returnToWelcome();
+    }
+  });
+
+  // "Fechar e continuar" no modal de erro – salva e volta ao menu
+  document.getElementById('btn-wrong-close').addEventListener('click', () => {
+    closeModal('modal-wrong');
+    if (state.playerName) updateRanking();
+    returnToWelcome();
+  });
+
+  // Resetar todos os dados
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    if (confirm('⚠️ Tem certeza? Isso apagará TODO o ranking e dados de TODOS os jogadores permanentemente!')) {
+      localStorage.removeItem(LS_KEY);
+      alert('✅ Dados resetados com sucesso!');
     }
   });
 

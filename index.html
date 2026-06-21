@@ -29,6 +29,9 @@
       <button id="btn-ranking-welcome" class="btn btn-outline">
         🏅 Ver Ranking
       </button>
+      <button id="btn-reset" class="btn-reset-welcome">
+        🗑️ Resetar todos os dados
+      </button>
     </div>
   </div>
 
@@ -99,9 +102,9 @@
 
     <!-- Result Controls (sub-aba após o sorteio) -->
     <div class="result-controls hidden" id="result-controls">
-
-      <!-- FASE 1: Pergunta – bandeira grande + acertou/errou -->
       <div class="result-phase" id="phase-question">
+
+        <!-- Bandeira grande -->
         <div class="flag-stage">
           <div class="flag-stage-glow"></div>
           <img id="spotlight-flag-img" src="" alt="" class="flag-stage-img" />
@@ -110,24 +113,25 @@
           <span class="spotlight-badge" id="spotlight-badge">Sorteio #1</span>
           <span class="spotlight-remaining" id="spotlight-remaining">47 restantes</span>
         </div>
+
+        <!-- Nome do país (escondido até revelar) -->
+        <div class="country-name-wrapper">
+          <div id="country-name-blur" class="country-name-blur">██████████</div>
+          <div id="country-name-reveal" class="country-name-reveal hidden"></div>
+        </div>
+        <button id="btn-reveal" class="btn btn-reveal">Mostrar nome da bandeira</button>
+
+        <!-- Resposta (ativa após revelar) -->
         <div class="answer-section">
-          <button id="btn-correct" class="btn btn-correct">✅ Acertou</button>
-          <button id="btn-wrong" class="btn btn-wrong">❌ Errou</button>
+          <button id="btn-correct" class="btn btn-correct" disabled>✅ Acertou</button>
+          <button id="btn-wrong" class="btn btn-wrong" disabled>❌ Errou</button>
         </div>
-      </div>
+        <div id="answer-feedback" class="answer-feedback-inline hidden"></div>
 
-      <!-- FASE 2: Resposta – nome revelado + girar novamente -->
-      <div class="result-phase hidden" id="phase-answer">
-        <div class="feedback-card" id="feedback-card">
-          <div class="feedback-icon" id="feedback-icon">✅</div>
-          <div class="feedback-country" id="feedback-country">BRASIL</div>
-          <div class="feedback-label">Era essa a bandeira!</div>
-        </div>
-        <button id="btn-spin-again" class="btn btn-spin">
-          Girar novamente
-        </button>
-      </div>
+        <!-- Sempre disponível -->
+        <button id="btn-spin-again" class="btn btn-spin">Girar novamente</button>
 
+      </div>
     </div>
 
   </div>
@@ -144,7 +148,7 @@
         <!-- Filled by JS -->
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline-sm" data-close="modal-wrong">Fechar e continuar</button>
+        <button id="btn-wrong-close" class="btn btn-outline-sm">Fechar e continuar</button>
       </div>
     </div>
   </div>
