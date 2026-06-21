@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🏆 Copa do Mundo 2026 – Jogo das Bandeiras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== TELA DE BOAS-VINDAS ===== -->
+  <div id="screen-welcome" class="screen active">
+    <div class="stars"></div>
+    <div class="welcome-card">
+      <div class="welcome-logo">⚽</div>
+      <h1 class="welcome-title">Copa do Mundo</h1>
+      <h2 class="welcome-subtitle">Jogo das Bandeiras 2026</h2>
+      <p class="welcome-desc">Identifique as bandeiras dos 48 países participantes!</p>
+      <div class="form-group">
+        <label for="player-name">Seu nome</label>
+        <input type="text" id="player-name" placeholder="Digite seu nome..." maxlength="20" autocomplete="off" />
+      </div>
+      <button id="btn-start" class="btn btn-primary btn-large">
+        🚀 Começar
+      </button>
+      <button id="btn-ranking-welcome" class="btn btn-outline">
+        🏅 Ver Ranking
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== TELA PRINCIPAL DO JOGO ===== -->
+  <div id="screen-game" class="screen">
+
+    <!-- Header -->
+    <header class="game-header">
+      <div class="player-badge">
+        <span class="player-avatar">👤</span>
+        <div class="player-info">
+          <span id="display-name" class="player-name-display">Jogador</span>
+          <span id="display-score" class="player-score">✅ 0 &nbsp;|&nbsp; ❌ 0</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-sound" class="btn-icon" title="Som">🔊</button>
+        <button id="btn-stats" class="btn-icon" title="Estatísticas">📊</button>
+        <button id="btn-history-btn" class="btn-icon" title="Histórico">📜</button>
+        <button id="btn-ranking-game" class="btn-icon" title="Ranking">🏅</button>
+      </div>
+    </header>
+
+    <!-- Info Bar -->
+    <div class="info-bar">
+      <div class="info-item">
+        <span class="info-label">Restam</span>
+        <span id="remaining-count" class="info-value">48</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Sorteados</span>
+        <span id="drawn-count" class="info-value">0</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Sequência</span>
+        <span id="streak-display" class="info-value streak">🔥 0</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Tempo</span>
+        <span id="time-display" class="info-value">00:00</span>
+      </div>
+    </div>
+
+    <!-- Roulette Section -->
+    <div class="roulette-section">
+      <div class="roulette-wrapper" id="roulette-wrapper">
+        <!-- Marker (seta central) -->
+        <div class="roulette-marker">
+          <div class="marker-arrow top">▼</div>
+          <div class="marker-line"></div>
+          <div class="marker-arrow bottom">▲</div>
+        </div>
+        <!-- Track container -->
+        <div class="roulette-container" id="roulette-container">
+          <div class="roulette-track" id="roulette-track"></div>
+        </div>
+        <!-- Side fades -->
+        <div class="roulette-fade left"></div>
+        <div class="roulette-fade right"></div>
+      </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div class="game-controls" id="game-controls">
+      <button id="btn-spin" class="btn btn-spin">Girar</button>
+    </div>
+
+    <!-- Result Controls (hidden until roulette stops) -->
+    <div class="result-controls hidden" id="result-controls">
+
+      <!-- Mini Spotlight da Bandeira Sorteada -->
+      <div class="flag-spotlight" id="flag-spotlight">
+        <div class="spotlight-flag-wrap">
+          <img id="spotlight-flag-img" src="" alt="" />
+        </div>
+        <div class="spotlight-info">
+          <span class="spotlight-badge" id="spotlight-badge">Sorteio #1</span>
+          <span class="spotlight-remaining" id="spotlight-remaining">47 restantes</span>
+        </div>
+      </div>
+
+      <!-- Country Reveal -->
+      <div class="reveal-section">
+        <div class="country-name-wrapper">
+          <div id="country-name-blur" class="country-name-blur">██████████</div>
+          <div id="country-name-reveal" class="country-name-reveal hidden"></div>
+        </div>
+        <button id="btn-reveal" class="btn btn-reveal">
+          Mostrar nome da bandeira
+        </button>
+      </div>
+
+      <!-- Answer Buttons -->
+      <div class="answer-section">
+        <button id="btn-correct" class="btn btn-correct" disabled>
+          ✅ Acertou
+        </button>
+        <button id="btn-wrong" class="btn btn-wrong" disabled>
+          ❌ Errou
+        </button>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="nav-section">
+        <button id="btn-spin-again" class="btn btn-outline-sm">
+          Girar novamente
+        </button>
+        <button id="btn-new-player" class="btn btn-outline-sm">
+          👤 Novo jogador
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ===== MODAL: ERROU – Stats + Comparação ===== -->
+  <div id="modal-wrong" class="modal hidden">
+    <div class="modal-overlay" data-close="modal-wrong"></div>
+    <div class="modal-content">
+      <div class="modal-header wrong-header">
+        <h2>❌ Não foi dessa vez!</h2>
+        <button class="modal-close" data-close="modal-wrong">✕</button>
+      </div>
+      <div class="modal-body" id="wrong-body">
+        <!-- Filled by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-sm" data-close="modal-wrong">Fechar e continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: ESTATÍSTICAS ===== -->
+  <div id="modal-stats" class="modal hidden">
+    <div class="modal-overlay" data-close="modal-stats"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📊 Estatísticas</h2>
+        <button class="modal-close" data-close="modal-stats">✕</button>
+      </div>
+      <div class="modal-body" id="stats-body">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: RANKING ===== -->
+  <div id="modal-ranking" class="modal hidden">
+    <div class="modal-overlay" data-close="modal-ranking"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🏅 Ranking</h2>
+        <button class="modal-close" data-close="modal-ranking">✕</button>
+      </div>
+      <div class="modal-body" id="ranking-body">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: HISTÓRICO ===== -->
+  <div id="modal-history" class="modal hidden">
+    <div class="modal-overlay" data-close="modal-history"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📜 Histórico da Partida</h2>
+        <button class="modal-close" data-close="modal-history">✕</button>
+      </div>
+      <div class="modal-body" id="history-body">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: FIM DE JOGO ===== -->
+  <div id="modal-gameover" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content gameover-content">
+      <div class="gameover-emoji">🏆</div>
+      <h2 class="gameover-title">Todos os países foram sorteados!</h2>
+      <p class="gameover-subtitle" id="gameover-player-name"></p>
+      <div class="gameover-stats" id="gameover-stats"></div>
+      <div class="gameover-actions">
+        <button id="btn-play-again" class="btn btn-primary">🔄 Nova Partida</button>
+        <button id="btn-gameover-ranking" class="btn btn-outline">🏅 Ver Ranking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONFETTI CONTAINER ===== -->
+  <div id="confetti-container" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
