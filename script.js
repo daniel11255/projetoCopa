@@ -580,6 +580,9 @@ function showResultControls() {
   document.getElementById('btn-correct').disabled = true;
   document.getElementById('btn-wrong').disabled   = true;
 
+  // Girar novamente bloqueado até responder
+  document.getElementById('btn-spin-again').disabled = true;
+
   // Oculta feedback anterior
   const fb = document.getElementById('answer-feedback');
   fb.className = 'answer-feedback-inline hidden';
@@ -1039,6 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '✅ Acerto registrado!';
     fb.className = 'answer-feedback-inline is-correct';
+    document.getElementById('btn-spin-again').disabled = false;
   });
 
   document.getElementById('btn-wrong').addEventListener('click', () => {
@@ -1062,6 +1066,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '❌ Erro registrado!';
     fb.className = 'answer-feedback-inline is-wrong';
+    document.getElementById('btn-spin-again').disabled = false;
 
     // Modal com estatísticas + comparativo
     setTimeout(() => { renderWrongModal(); openModal('modal-wrong'); }, 450);
