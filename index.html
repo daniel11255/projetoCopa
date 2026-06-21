@@ -22,9 +22,10 @@
       <div class="form-group">
         <label for="player-name">Seu nome</label>
         <input type="text" id="player-name" placeholder="Digite seu nome..." maxlength="20" autocomplete="off" />
+        <div id="name-error" class="name-error hidden"></div>
       </div>
       <button id="btn-start" class="btn btn-primary btn-large">
-        🚀 Começar
+        Começar
       </button>
       <button id="btn-ranking-welcome" class="btn btn-outline">
         🏅 Ver Ranking
@@ -49,10 +50,6 @@
       </div>
       <div class="header-actions">
         <button id="btn-sound" class="btn-icon" title="Som">🔊</button>
-        <button id="btn-stats" class="btn-icon" title="Estatísticas">📊</button>
-        <button id="btn-history-btn" class="btn-icon" title="Histórico">📜</button>
-        <button id="btn-ranking-game" class="btn-icon" title="Ranking">🏅</button>
-        <button id="btn-new-player" class="btn-icon btn-icon-danger" title="Novo jogador">👤</button>
       </div>
     </header>
 
@@ -128,8 +125,8 @@
         </div>
         <div id="answer-feedback" class="answer-feedback-inline hidden"></div>
 
-        <!-- Sempre disponível -->
-        <button id="btn-spin-again" class="btn btn-spin">Girar novamente</button>
+        <!-- Aparece somente após clicar em Acertou -->
+        <button id="btn-spin-again" class="btn btn-spin hidden">Girar novamente</button>
 
       </div>
     </div>
@@ -153,31 +150,20 @@
     </div>
   </div>
 
-  <!-- ===== MODAL: ESTATÍSTICAS ===== -->
-  <div id="modal-stats" class="modal hidden">
-    <div class="modal-overlay" data-close="modal-stats"></div>
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>📊 Estatísticas</h2>
-        <button class="modal-close" data-close="modal-stats">✕</button>
-      </div>
-      <div class="modal-body" id="stats-body">
-        <!-- Filled by JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== MODAL: RANKING ===== -->
+  <!-- ===== MODAL: RANKING + ESTATÍSTICAS ===== -->
   <div id="modal-ranking" class="modal hidden">
     <div class="modal-overlay" data-close="modal-ranking"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h2>🏅 Ranking</h2>
+        <h2 id="ranking-modal-title">🏅 Ranking</h2>
         <button class="modal-close" data-close="modal-ranking">✕</button>
       </div>
-      <div class="modal-body" id="ranking-body">
-        <!-- Filled by JS -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="tab-ranking">🏅 Ranking</button>
+        <button class="modal-tab" id="tab-stats">📊 Estatísticas</button>
       </div>
+      <div class="modal-body" id="ranking-body"></div>
+      <div class="modal-body hidden" id="stats-body"></div>
     </div>
   </div>
 
