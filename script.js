@@ -453,6 +453,7 @@ function showResultControls() {
 
   document.getElementById('btn-correct').disabled = true;
   document.getElementById('btn-wrong').disabled   = true;
+  document.querySelector('.answer-section').classList.add('hidden');
 
   const spinAgainBtn = document.getElementById('btn-spin-again');
   spinAgainBtn.disabled = true;
@@ -535,8 +536,8 @@ function exportRankingPDF() {
   const margin   = 16;
   const contentW = pageW - margin * 2;
 
-  // Proporções de coluna: Nome | Classificação | Aproveitamento | Tempo
-  const cols = [0, 0.38, 0.62, 0.82].map(p => margin + p * contentW);
+  // Proporções de coluna: Nome | Classificação | Acertos | Aproveitamento | Tempo
+  const cols = [0, 0.34, 0.54, 0.70, 0.86].map(p => margin + p * contentW);
 
   // Cabeçalho da tabela
   const headerH = 9;
@@ -548,8 +549,9 @@ function exportRankingPDF() {
   doc.setTextColor(...WHITE);
   doc.text('Nome',           cols[0] + 3, y + 6);
   doc.text('Classificação',  cols[1] + 3, y + 6);
-  doc.text('Aproveitamento', cols[2] + 3, y + 6);
-  doc.text('Tempo',          cols[3] + 3, y + 6);
+  doc.text('Acertos',        cols[2] + 3, y + 6);
+  doc.text('Aproveitamento', cols[3] + 3, y + 6);
+  doc.text('Tempo',          cols[4] + 3, y + 6);
   y += headerH;
 
   if (ranking.length === 0) {
@@ -569,6 +571,7 @@ function exportRankingPDF() {
     const total   = acertos + erros;
     const pct     = total > 0 ? Math.round(acertos / total * 100) : 0;
     const tempo   = r.bestTime ? formatTime(r.bestTime) : '—';
+    const acertosStr = `${String(acertos).padStart(2, '0')}/48`;
 
     // Linha com fundo alternado
     doc.setFillColor(...(i % 2 === 0 ? LIGHT : WHITE));
@@ -579,8 +582,9 @@ function exportRankingPDF() {
     doc.setTextColor(...DARK);
     doc.text(r.name,       cols[0] + 3, y + 5.5);
     doc.text(`${i + 1}º`,  cols[1] + 3, y + 5.5);
-    doc.text(`${pct}%`,   cols[2] + 3, y + 5.5);
-    doc.text(tempo,        cols[3] + 3, y + 5.5);
+    doc.text(acertosStr,   cols[2] + 3, y + 5.5);
+    doc.text(`${pct}%`,    cols[3] + 3, y + 5.5);
+    doc.text(tempo,        cols[4] + 3, y + 5.5);
 
     // Linha divisória fina
     doc.setDrawColor(220, 220, 220);
@@ -849,9 +853,6 @@ function returnToWelcome() {
   cancelAnimationFrame(animFrameId);
   stopTimer();
   stopSpinSound();
-  // Reseta a visualização do cronômetro para o próximo jogador (apenas visual)
-  const timeEl = document.getElementById('time-display');
-  if (timeEl) timeEl.textContent = '00:00';
   document.getElementById('screen-game').classList.remove('active');
   document.getElementById('screen-welcome').classList.add('active');
   ['modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
@@ -925,6 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-correct').disabled = false;
     document.getElementById('btn-wrong').disabled   = false;
+    document.querySelector('.answer-section').classList.remove('hidden');
   });
 
   document.getElementById('btn-correct').addEventListener('click', () => {
@@ -1009,25 +1011,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal('modal-gameover');
     renderRanking();
     openModal('modal-ranking');
-
-    // Bloqueia fechamento acidental clicando fora do modal de ranking
-    // quando ele é aberto a partir da tela de fim de jogo.
-    const rankingModal   = document.getElementById('modal-ranking');
-    const rankingOverlay = rankingModal.querySelector('.modal-overlay');
-    const prevPE         = rankingOverlay.style.pointerEvents;
-    rankingOverlay.style.pointerEvents = 'none';
-
-    // Substitui o botão ✕ por um clone sem data-close, para que o
-    // handler global não feche o modal — só nosso listener controlado.
-    const oldClose = rankingModal.querySelector('.modal-close');
-    const newClose = oldClose.cloneNode(true);
-    newClose.removeAttribute('data-close');
-    oldClose.parentNode.replaceChild(newClose, oldClose);
-    newClose.addEventListener('click', () => {
-      rankingOverlay.style.pointerEvents = prevPE;
-      closeModal('modal-ranking');
-      returnToWelcome();
-    });
   });
 
   let resizeTimer;
