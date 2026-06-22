@@ -6,122 +6,94 @@
  * =====================================================
  */
 
-// =====================================================
-// DADOS: 48 seleções participantes
-// =====================================================
-
 const TEAMS = [
-  // Grupo A
   { id:  1, name: 'México',            code: 'mx' },
   { id:  2, name: 'África do Sul',     code: 'za' },
   { id:  3, name: 'Coreia do Sul',     code: 'kr' },
   { id:  4, name: 'Tchéquia',          code: 'cz' },
-  // Grupo B
   { id:  5, name: 'Canadá',            code: 'ca' },
   { id:  6, name: 'Bósnia-Herzegovina',code: 'ba' },
   { id:  7, name: 'Catar',             code: 'qa' },
   { id:  8, name: 'Suíça',             code: 'ch' },
-  // Grupo C
   { id:  9, name: 'Brasil',            code: 'br' },
   { id: 10, name: 'Marrocos',          code: 'ma' },
   { id: 11, name: 'Haiti',             code: 'ht' },
   { id: 12, name: 'Escócia',           code: 'gb-sct' },
-  // Grupo D
   { id: 13, name: 'Estados Unidos',    code: 'us' },
   { id: 14, name: 'Paraguai',          code: 'py' },
   { id: 15, name: 'Austrália',         code: 'au' },
   { id: 16, name: 'Turquia',           code: 'tr' },
-  // Grupo E
   { id: 17, name: 'Alemanha',          code: 'de' },
   { id: 18, name: 'Curaçao',           code: 'cw' },
   { id: 19, name: 'Costa do Marfim',   code: 'ci' },
   { id: 20, name: 'Equador',           code: 'ec' },
-  // Grupo F
   { id: 21, name: 'Holanda',           code: 'nl' },
   { id: 22, name: 'Japão',             code: 'jp' },
   { id: 23, name: 'Suécia',            code: 'se' },
   { id: 24, name: 'Tunísia',           code: 'tn' },
-  // Grupo G
   { id: 25, name: 'Bélgica',           code: 'be' },
   { id: 26, name: 'Egito',             code: 'eg' },
   { id: 27, name: 'Irã',               code: 'ir' },
   { id: 28, name: 'Nova Zelândia',     code: 'nz' },
-  // Grupo H
   { id: 29, name: 'Espanha',           code: 'es' },
   { id: 30, name: 'Cabo Verde',        code: 'cv' },
   { id: 31, name: 'Arábia Saudita',    code: 'sa' },
   { id: 32, name: 'Uruguai',           code: 'uy' },
-  // Grupo I
   { id: 33, name: 'França',            code: 'fr' },
   { id: 34, name: 'Senegal',           code: 'sn' },
   { id: 35, name: 'Iraque',            code: 'iq' },
   { id: 36, name: 'Noruega',           code: 'no' },
-  // Grupo J
   { id: 37, name: 'Argentina',         code: 'ar' },
   { id: 38, name: 'Argélia',           code: 'dz' },
   { id: 39, name: 'Áustria',           code: 'at' },
   { id: 40, name: 'Jordânia',          code: 'jo' },
-  // Grupo K
   { id: 41, name: 'Portugal',          code: 'pt' },
   { id: 42, name: 'R.D. Congo',        code: 'cd' },
   { id: 43, name: 'Uzbequistão',       code: 'uz' },
   { id: 44, name: 'Colômbia',          code: 'co' },
-  // Grupo L
   { id: 45, name: 'Inglaterra',        code: 'gb-eng' },
   { id: 46, name: 'Croácia',           code: 'hr' },
   { id: 47, name: 'Gana',              code: 'gh' },
   { id: 48, name: 'Panamá',            code: 'pa' },
 ];
 
-// =====================================================
-// CONFIGURAÇÃO DA ROLETA
-// =====================================================
-
-const ITEM_W     = 150;
-const NUM_COPIES = 12;
-const COPY_SIZE  = TEAMS.length;
+const ITEM_W      = 150;
+const NUM_COPIES  = 12;
+const COPY_SIZE   = TEAMS.length;
 const TOTAL_ITEMS = NUM_COPIES * COPY_SIZE;
 
-// =====================================================
-// ESTADO DO JOGO
-// =====================================================
-
 const state = {
-  playerName:    '',
-  remaining:     [],
-  drawn:         [],
-  history:       [],
-  correct:       0,
-  wrong:         0,
-  streak:        0,
-  bestStreak:    0,
-  totalSpins:    0,
+  playerName:   '',
+  remaining:    [],
+  drawn:        [],
+  history:      [],
+  correct:      0,
+  wrong:        0,
+  streak:       0,
+  bestStreak:   0,
+  totalSpins:   0,
   currentWinner: null,
-  startTime:      null,
-  pausedAt:       null,
-  totalPausedMs:  0,
-  soundEnabled:   true,
-  spinning:       false,
-  revealed:       false,
-  answered:       false,
+  startTime:     null,
+  pausedAt:      null,
+  totalPausedMs: 0,
+  soundEnabled:  true,
+  spinning:      false,
+  revealed:      false,
+  answered:      false,
 };
 
-// =====================================================
-// ESTADO DA ROLETA
-// =====================================================
-
 let stripOrderBase = [];
-let stripOrder = [];
-let currentOffset = 0;
-let animFrameId = null;
+let stripOrder     = [];
+let currentOffset  = 0;
+let animFrameId    = null;
 
 // =====================================================
-// ÁUDIO (Web Audio API)
+// ÁUDIO
 // =====================================================
 
-let audioCtx = null;
-let spinTickTimer = null;
-let spinTickDelay = 180;
+let audioCtx      = null;
+let spinTickTimer  = null;
+let spinTickDelay  = 180;
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -131,8 +103,8 @@ function getAudioCtx() {
 function playTone(freq, duration, type = 'sine', gain = 0.25) {
   if (!state.soundEnabled) return;
   try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
+    const ctx      = getAudioCtx();
+    const osc      = ctx.createOscillator();
     const gainNode = ctx.createGain();
     osc.connect(gainNode);
     gainNode.connect(ctx.destination);
@@ -156,15 +128,12 @@ function startSpinSound() {
   tick();
 }
 
-function stopSpinSound() {
-  clearTimeout(spinTickTimer);
-  spinTickTimer = null;
-}
+function stopSpinSound() { clearTimeout(spinTickTimer); spinTickTimer = null; }
 
 function playStopSound() {
   playTone(880, 0.25);
   setTimeout(() => playTone(1100, 0.35), 150);
-  setTimeout(() => playTone(1320, 0.5), 300);
+  setTimeout(() => playTone(1320, 0.5),  300);
 }
 
 function playCorrectSound() {
@@ -184,9 +153,9 @@ function launchConfetti() {
   const colors = ['#009c3b','#FFDF00','#002776','#ff6b6b','#4ecdc4','#ffffff','#ff9ff3'];
   for (let i = 0; i < 120; i++) {
     setTimeout(() => {
-      const p = document.createElement('div');
+      const p    = document.createElement('div');
       p.className = 'confetti-piece';
-      const size = Math.random() * 10 + 6;
+      const size  = Math.random() * 10 + 6;
       p.style.cssText = `
         left: ${Math.random() * 100}vw;
         width: ${size}px;
@@ -202,13 +171,7 @@ function launchConfetti() {
   }
 }
 
-// =====================================================
-// VIBRAÇÃO
-// =====================================================
-
-function vibrate(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
-}
+function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
 
 // =====================================================
 // UTILITÁRIOS
@@ -223,9 +186,7 @@ function shuffle(arr) {
   return a;
 }
 
-function getFlagUrl(code) {
-  return `https://flagcdn.com/w160/${code}.png`;
-}
+function getFlagUrl(code)   { return `https://flagcdn.com/w160/${code}.png`; }
 
 function formatTime(seconds) {
   const m = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -246,9 +207,7 @@ function getElapsedSeconds() {
   return Math.floor((Date.now() - state.startTime - pausedMs) / 1000);
 }
 
-function pauseTimer() {
-  if (!state.pausedAt) state.pausedAt = Date.now();
-}
+function pauseTimer()  { if (!state.pausedAt) state.pausedAt = Date.now(); }
 
 function resumeTimer() {
   if (state.pausedAt) {
@@ -258,7 +217,7 @@ function resumeTimer() {
 }
 
 // =====================================================
-// TIMER DE JOGO
+// TIMER
 // =====================================================
 
 let timerInterval = null;
@@ -271,40 +230,31 @@ function startTimer() {
   }, 1000);
 }
 
-function stopTimer() {
-  clearInterval(timerInterval);
-}
+function stopTimer() { clearInterval(timerInterval); }
 
 // =====================================================
-// LOCALSTROAGE – RANKING
+// LOCALSTORAGE – RANKING
 // =====================================================
 
 const LS_KEY = 'copa2026_ranking';
 
-function loadRanking() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
-  catch { return []; }
-}
-
-function saveRanking(ranking) {
-  localStorage.setItem(LS_KEY, JSON.stringify(ranking));
-}
+function loadRanking()         { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
+function saveRanking(ranking)  { localStorage.setItem(LS_KEY, JSON.stringify(ranking)); }
 
 function updateRanking() {
   const ranking = loadRanking();
-  const pct = state.totalSpins > 0 ? Math.round(state.correct / state.totalSpins * 100) : 0;
-
-  const idx = ranking.findIndex(r => r.name.toLowerCase() === state.playerName.toLowerCase());
+  const pct     = state.totalSpins > 0 ? Math.round(state.correct / state.totalSpins * 100) : 0;
+  const idx     = ranking.findIndex(r => r.name.toLowerCase() === state.playerName.toLowerCase());
 
   if (idx >= 0) {
-    const r = ranking[idx];
+    const r       = ranking[idx];
     const elapsed = getElapsedSeconds();
-    r.totalGames  += 1;
+    r.totalGames   += 1;
     r.totalCorrect += state.correct;
     r.totalWrong   += state.wrong;
-    r.bestStreak   = Math.max(r.bestStreak, state.bestStreak);
-    r.bestPct      = Math.max(r.bestPct, pct);
-    r.lastPlayed   = Date.now();
+    r.bestStreak    = Math.max(r.bestStreak, state.bestStreak);
+    r.bestPct       = Math.max(r.bestPct, pct);
+    r.lastPlayed    = Date.now();
     if (!r.bestTime || elapsed < r.bestTime) r.bestTime = elapsed;
   } else {
     ranking.push({
@@ -324,126 +274,87 @@ function updateRanking() {
 }
 
 // =====================================================
-// CONSTRUÇÃO DA FAIXA DA ROLETA
+// ROLETA
 // =====================================================
 
 function buildStrip() {
   stripOrderBase = shuffle(TEAMS);
-  stripOrder = [];
+  stripOrder     = [];
   for (let i = 0; i < NUM_COPIES; i++) stripOrder.push(...stripOrderBase);
 
   const track = document.getElementById('roulette-track');
   track.innerHTML = '';
-
-  track.style.width = (TOTAL_ITEMS * ITEM_W) + 'px';
+  track.style.width    = (TOTAL_ITEMS * ITEM_W) + 'px';
   track.style.minWidth = (TOTAL_ITEMS * ITEM_W) + 'px';
 
-  stripOrder.forEach((team) => {
+  stripOrder.forEach(team => {
     const item = document.createElement('div');
-    item.className = 'flag-item';
-    item.dataset.teamId = team.id;
+    item.className       = 'flag-item';
+    item.dataset.teamId  = team.id;
     const img = document.createElement('img');
-    img.src = getFlagUrl(team.code);
-    img.alt = team.name;
+    img.src     = getFlagUrl(team.code);
+    img.alt     = team.name;
     img.loading = 'lazy';
     item.appendChild(img);
     track.appendChild(item);
   });
 
-  const containerW = getContainerWidth();
-  const startCopy = 2;
-  currentOffset = startCopy * COPY_SIZE * ITEM_W - containerW / 2 + ITEM_W / 2;
+  const containerW  = getContainerWidth();
+  currentOffset     = 2 * COPY_SIZE * ITEM_W - containerW / 2 + ITEM_W / 2;
   setTrackOffset(currentOffset);
 }
 
-function getContainerWidth() {
-  return document.getElementById('roulette-container').offsetWidth;
-}
-
-function setTrackOffset(offset) {
-  document.getElementById('roulette-track').style.transform = `translateX(${-offset}px)`;
-}
-
-// =====================================================
-// ANIMAÇÃO IDLE
-// =====================================================
+function getContainerWidth() { return document.getElementById('roulette-container').offsetWidth; }
+function setTrackOffset(o)   { document.getElementById('roulette-track').style.transform = `translateX(${-o}px)`; }
 
 function startIdle() {
   cancelAnimationFrame(animFrameId);
   state.spinning = false;
-
-  const IDLE_SPEED  = 0.6;
-  const WRAP_AT     = 6 * COPY_SIZE * ITEM_W;
-  const WRAP_JUMP   = 3 * COPY_SIZE * ITEM_W;
-
+  const IDLE_SPEED = 0.6;
+  const WRAP_AT    = 6 * COPY_SIZE * ITEM_W;
+  const WRAP_JUMP  = 3 * COPY_SIZE * ITEM_W;
   function frame() {
     currentOffset += IDLE_SPEED;
     if (currentOffset > WRAP_AT) currentOffset -= WRAP_JUMP;
     setTrackOffset(currentOffset);
     animFrameId = requestAnimationFrame(frame);
   }
-
   animFrameId = requestAnimationFrame(frame);
 }
 
-// =====================================================
-// EASING
-// =====================================================
-
 function slotEasing(t) {
-  if (t < 0.15) {
-    const p = t / 0.15;
-    return p * p * 0.18;
-  } else if (t < 0.55) {
-    const p = (t - 0.15) / 0.40;
-    return 0.18 + p * 0.45;
-  } else {
-    const p = (t - 0.55) / 0.45;
-    return 0.63 + (1 - Math.pow(1 - p, 3)) * 0.37;
-  }
+  if (t < 0.15)      { const p = t / 0.15;          return p * p * 0.18; }
+  else if (t < 0.55) { const p = (t - 0.15) / 0.40; return 0.18 + p * 0.45; }
+  else               { const p = (t - 0.55) / 0.45;  return 0.63 + (1 - Math.pow(1 - p, 3)) * 0.37; }
 }
 
-// =====================================================
-// SORTEIO E SPIN
-// =====================================================
-
 function calcOffset(teamId, copyIndex) {
-  const posInBase = stripOrderBase.findIndex(t => t.id === teamId);
-  const stripIdx  = copyIndex * COPY_SIZE + posInBase;
+  const posInBase  = stripOrderBase.findIndex(t => t.id === teamId);
+  const stripIdx   = copyIndex * COPY_SIZE + posInBase;
   const containerW = getContainerWidth();
   return stripIdx * ITEM_W - containerW / 2 + ITEM_W / 2;
 }
 
 function findTargetOffset(team) {
   const MIN_ADVANCE = 4 * COPY_SIZE * ITEM_W;
-
   for (let copy = 0; copy < NUM_COPIES; copy++) {
     const offset = calcOffset(team.id, copy);
-    if (offset > currentOffset + MIN_ADVANCE) {
-      return offset;
-    }
+    if (offset > currentOffset + MIN_ADVANCE) return offset;
   }
   return calcOffset(team.id, NUM_COPIES - 1);
 }
 
 function highlightWinner(teamId) {
-  document.querySelectorAll('.flag-item').forEach(el => {
-    el.classList.remove('winner');
-  });
-  const containerW = getContainerWidth();
+  document.querySelectorAll('.flag-item').forEach(el => el.classList.remove('winner'));
+  const containerW     = getContainerWidth();
   const centerAbsolute = currentOffset + containerW / 2;
-
-  const items = document.querySelectorAll('.flag-item');
-  let closest = null;
-  let closestDist = Infinity;
-
+  const items          = document.querySelectorAll('.flag-item');
+  let closest = null, closestDist = Infinity;
   items.forEach((el, idx) => {
     if (parseInt(el.dataset.teamId) !== teamId) return;
-    const itemCenter = idx * ITEM_W + ITEM_W / 2;
-    const dist = Math.abs(itemCenter - centerAbsolute);
+    const dist = Math.abs(idx * ITEM_W + ITEM_W / 2 - centerAbsolute);
     if (dist < closestDist) { closestDist = dist; closest = el; }
   });
-
   if (closest) closest.classList.add('winner');
 }
 
@@ -454,41 +365,29 @@ function doSpin() {
   document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
   hideResultControls();
 
-  const winner = state.remaining[Math.floor(Math.random() * state.remaining.length)];
-  state.currentWinner = winner;
+  const winner          = state.remaining[Math.floor(Math.random() * state.remaining.length)];
+  state.currentWinner   = winner;
   state.totalSpins++;
-  state.spinning = true;
+  state.spinning        = true;
 
   cancelAnimationFrame(animFrameId);
-  hideResultControls();
   startSpinSound();
   vibrate([50, 30, 50]);
-
   setSpinButtonEnabled(false);
 
-  const startOffset = currentOffset;
+  const startOffset  = currentOffset;
   const targetOffset = findTargetOffset(winner);
-  const totalDelta = targetOffset - startOffset;
-  const DURATION = 500;
-  const startTime = performance.now();
+  const totalDelta   = targetOffset - startOffset;
+  const DURATION     = 500;
+  const startTime    = performance.now();
 
   function frame(now) {
-    const elapsed = now - startTime;
-    const t = Math.min(elapsed / DURATION, 1);
-    const eased = slotEasing(t);
-
-    currentOffset = startOffset + eased * totalDelta;
+    const t     = Math.min((now - startTime) / DURATION, 1);
+    currentOffset = startOffset + slotEasing(t) * totalDelta;
     setTrackOffset(currentOffset);
-
-    if (t < 1) {
-      animFrameId = requestAnimationFrame(frame);
-    } else {
-      currentOffset = targetOffset;
-      setTrackOffset(currentOffset);
-      onSpinComplete(winner);
-    }
+    if (t < 1) { animFrameId = requestAnimationFrame(frame); }
+    else        { currentOffset = targetOffset; setTrackOffset(currentOffset); onSpinComplete(winner); }
   }
-
   animFrameId = requestAnimationFrame(frame);
 }
 
@@ -508,9 +407,10 @@ function onSpinComplete(winner) {
   updateInfoBar();
   setSpinButtonEnabled(true);
   showResultControls();
+
   if (!state.startTime) {
     state.startTime = Date.now();
-    state.pausedAt = null;
+    state.pausedAt  = null;
     startTimer();
   } else {
     resumeTimer();
@@ -519,12 +419,10 @@ function onSpinComplete(winner) {
 }
 
 // =====================================================
-// CONTROLES DE INTERFACE
+// INTERFACE
 // =====================================================
 
-function setSpinButtonEnabled(enabled) {
-  document.getElementById('btn-spin').disabled = !enabled;
-}
+function setSpinButtonEnabled(enabled) { document.getElementById('btn-spin').disabled = !enabled; }
 
 function hideResultControls() {
   document.getElementById('result-controls').classList.add('hidden');
@@ -537,9 +435,9 @@ function showResultControls() {
   document.getElementById('result-controls').classList.remove('hidden');
 
   const winner = state.currentWinner;
-  document.getElementById('spotlight-flag-img').src = getFlagUrl(winner.code);
-  document.getElementById('spotlight-flag-img').alt = winner.name;
-  document.getElementById('spotlight-badge').textContent = `Sorteio #${state.drawn.length}`;
+  document.getElementById('spotlight-flag-img').src       = getFlagUrl(winner.code);
+  document.getElementById('spotlight-flag-img').alt       = winner.name;
+  document.getElementById('spotlight-badge').textContent  = `Sorteio #${state.drawn.length}`;
   document.getElementById('spotlight-remaining').textContent =
     `${state.remaining.length} ${state.remaining.length === 1 ? 'restante' : 'restantes'}`;
 
@@ -551,7 +449,7 @@ function showResultControls() {
   btnReveal.textContent = 'Mostrar nome da bandeira';
   btnReveal.classList.remove('revealed', 'btn-spin-inline');
   btnReveal.disabled = false;
-  btnReveal.onclick = null;
+  btnReveal.onclick  = null;
 
   document.getElementById('btn-correct').disabled = true;
   document.getElementById('btn-wrong').disabled   = true;
@@ -561,7 +459,7 @@ function showResultControls() {
   spinAgainBtn.classList.add('hidden');
 
   const fb = document.getElementById('answer-feedback');
-  fb.className = 'answer-feedback-inline hidden';
+  fb.className  = 'answer-feedback-inline hidden';
   fb.textContent = '';
 }
 
@@ -569,26 +467,17 @@ function updateInfoBar() {
   document.getElementById('remaining-count').textContent = state.remaining.length;
   document.getElementById('drawn-count').textContent     = state.drawn.length;
   document.getElementById('streak-display').textContent  = `🔥 ${state.streak}`;
-  document.getElementById('display-score').textContent =
+  document.getElementById('display-score').textContent   =
     `✅ ${state.correct} \u00a0|\u00a0 ❌ ${state.wrong}`;
 }
 
-function prepareNewSpin() {
-  hideResultControls();
-  document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
-  setSpinButtonEnabled(true);
-}
-
 // =====================================================
-// TELA DE GAME OVER
+// GAME OVER
 // =====================================================
 
 function showGameOver() {
   stopTimer();
   updateRanking();
-
-  const totalSpins = state.drawn.length;
-  const pct = totalSpins > 0 ? Math.round(state.correct / totalSpins * 100) : 0;
 
   document.getElementById('gameover-player-name').textContent =
     `Parabéns, ${state.playerName}! Você sorteou todos os 48 países!`;
@@ -605,6 +494,13 @@ function showGameOver() {
   `;
 
   openModal('modal-gameover');
+
+  // Bloqueia fechamento acidental: overlay não captura cliques, conteúdo sim
+  const gameoverOverlay = document.querySelector('#modal-gameover .modal-overlay');
+  gameoverOverlay.style.cursor        = 'default';
+  gameoverOverlay.style.pointerEvents = 'none';
+  document.querySelector('#modal-gameover .gameover-content').style.pointerEvents = 'auto';
+
   launchConfetti();
   playCorrectSound();
 }
@@ -613,191 +509,86 @@ function showGameOver() {
 // MODAIS
 // =====================================================
 
-function openModal(id) {
-  document.getElementById(id).classList.remove('hidden');
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
-}
-
-function renderStats() {
-  const elapsed = getElapsedSeconds();
-  const pct = state.totalSpins > 0 ? Math.round(state.correct / state.totalSpins * 100) : 0;
-
-  document.getElementById('stats-body').innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-card full-width">
-        <div class="stat-label">Jogador</div>
-        <div class="stat-value highlight">${state.playerName}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Total de sorteios</div>
-        <div class="stat-value">${state.totalSpins}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Países restantes</div>
-        <div class="stat-value">${state.remaining.length}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Acertos</div>
-        <div class="stat-value green">${state.correct}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Erros</div>
-        <div class="stat-value red">${state.wrong}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Sequência atual</div>
-        <div class="stat-value">${state.streak} 🔥</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Países sorteados</div>
-        <div class="stat-value">${state.drawn.length}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Tempo de jogo</div>
-        <div class="stat-value">${formatTime(elapsed)}</div>
-      </div>
-      <div class="stat-card full-width">
-        <div class="stat-label">Partida iniciada em</div>
-        <div class="stat-value" style="font-size:15px">${state.startTime ? formatDate(state.startTime) : 'Ainda não iniciada'}</div>
-      </div>
-    </div>
-  `;
-}
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 // =====================================================
-// EXPORTAR PDF DO RANKING
+// EXPORTAR PDF — tabela simples e objetiva
 // =====================================================
 
 function exportRankingPDF() {
-  // Pede o nome do arquivo antes de gerar
   let fileName = prompt('Nome do arquivo PDF:', 'ranking-copa2026');
-  if (fileName === null) return; // usuário cancelou
+  if (fileName === null) return;
   fileName = fileName.trim() || 'ranking-copa2026';
   if (!fileName.toLowerCase().endsWith('.pdf')) fileName += '.pdf';
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const doc     = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ranking = loadRanking();
 
-  const GREEN  = [0, 156, 59];
-  const YELLOW = [255, 223, 0];
-  const DARK   = [20, 20, 40];
-  const WHITE  = [255, 255, 255];
-  const LIGHT  = [240, 240, 248];
+  const DARK  = [20, 20, 40];
+  const WHITE = [255, 255, 255];
+  const LIGHT = [245, 248, 245];
 
-  const pageW = doc.internal.pageSize.getWidth();
-  const pageH = doc.internal.pageSize.getHeight();
-  const margin = 14;
+  const pageW    = doc.internal.pageSize.getWidth();
+  const pageH    = doc.internal.pageSize.getHeight();
+  const margin   = 16;
   const contentW = pageW - margin * 2;
 
-  // Cabeçalho
-  doc.setFillColor(...GREEN);
-  doc.rect(0, 0, pageW, 32, 'F');
-  doc.setFillColor(...YELLOW);
-  doc.rect(0, 30, pageW, 3, 'F');
+  // Proporções de coluna: Nome | Classificação | Aproveitamento | Tempo
+  const cols = [0, 0.38, 0.62, 0.82].map(p => margin + p * contentW);
 
+  // Cabeçalho da tabela
+  const headerH = 9;
+  let y = margin;
+  doc.setFillColor(0, 120, 50);
+  doc.rect(margin, y, contentW, headerH, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(9);
   doc.setTextColor(...WHITE);
-  doc.text('Copa do Mundo 2026', pageW / 2, 13, { align: 'center' });
-
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Jogo das Bandeiras — Ranking Oficial', pageW / 2, 22, { align: 'center' });
-
-  doc.setFontSize(8);
-  doc.setTextColor(200, 200, 200);
-  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageW / 2, 28, { align: 'center' });
-
-  let y = 42;
+  doc.text('Nome',           cols[0] + 3, y + 6);
+  doc.text('Classificação',  cols[1] + 3, y + 6);
+  doc.text('Aproveitamento', cols[2] + 3, y + 6);
+  doc.text('Tempo',          cols[3] + 3, y + 6);
+  y += headerH;
 
   if (ranking.length === 0) {
-    doc.setTextColor(...DARK);
-    doc.setFontSize(12);
-    doc.text('Nenhum jogador no ranking ainda.', pageW / 2, y, { align: 'center' });
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(11);
+    doc.text('Nenhum jogador no ranking ainda.', pageW / 2, y + 12, { align: 'center' });
     doc.save(fileName);
     return;
   }
 
-  const posLabels = ['#1', '#2', '#3'];
-  const accentColors = [
-    [255, 215, 0],
-    [192, 192, 192],
-    [205, 127, 50],
-  ];
-
+  const rowH = 8;
   ranking.forEach((r, i) => {
-    if (y + 42 > pageH - 14) {
-      doc.addPage();
-      y = 16;
-    }
+    if (y + rowH > pageH - margin) { doc.addPage(); y = margin; }
 
     const acertos = r.totalCorrect || 0;
     const erros   = r.totalWrong  || 0;
     const total   = acertos + erros;
     const pct     = total > 0 ? Math.round(acertos / total * 100) : 0;
     const tempo   = r.bestTime ? formatTime(r.bestTime) : '—';
-    const pos     = posLabels[i] || `#${i + 1}`;
-    const accent  = accentColors[i] || GREEN;
 
+    // Linha com fundo alternado
     doc.setFillColor(...(i % 2 === 0 ? LIGHT : WHITE));
-    doc.roundedRect(margin, y, contentW, 36, 3, 3, 'F');
+    doc.rect(margin, y, contentW, rowH, 'F');
 
-    doc.setFillColor(...accent);
-    doc.rect(margin, y, 4, 36, 'F');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.setTextColor(...accent);
-    doc.text(pos, margin + 10, y + 13, { align: 'center' });
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFont('helvetica', i === 0 ? 'bold' : 'normal');
+    doc.setFontSize(9.5);
     doc.setTextColor(...DARK);
-    doc.text(r.name, margin + 18, y + 9);
+    doc.text(r.name,       cols[0] + 3, y + 5.5);
+    doc.text(`${i + 1}º`,  cols[1] + 3, y + 5.5);
+    doc.text(`${pct}%`,   cols[2] + 3, y + 5.5);
+    doc.text(tempo,        cols[3] + 3, y + 5.5);
 
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.3);
-    doc.line(margin + 18, y + 12, margin + contentW - 4, y + 12);
+    // Linha divisória fina
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y + rowH, margin + contentW, y + rowH);
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 100);
-    doc.text('Classificação:', margin + 18, y + 19);
-    doc.text('Tempo:', margin + 18, y + 26);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...DARK);
-    doc.text(`${i + 1}º lugar`, margin + 46, y + 19);
-    doc.text(tempo, margin + 46, y + 26);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(80, 80, 100);
-    doc.text('Aproveitamento:', margin + 95, y + 19);
-    doc.text('Partidas:', margin + 95, y + 26);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...DARK);
-    doc.text(`${pct}%  (${acertos}/${total} acertos)`, margin + 126, y + 19);
-    doc.text(`${r.totalGames}`, margin + 126, y + 26);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(80, 80, 100);
-    doc.text('Melhor sequência:', margin + 18, y + 33);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...DARK);
-    doc.text(`${r.bestStreak || 0}`, margin + 60, y + 33);
-
-    y += 42;
+    y += rowH;
   });
-
-  // Rodapé
-  doc.setFontSize(8);
-  doc.setTextColor(150, 150, 150);
-  doc.text('Copa do Mundo 2026 – Jogo das Bandeiras', pageW / 2, pageH - 6, { align: 'center' });
 
   doc.save(fileName);
 }
@@ -818,13 +609,16 @@ function renderRanking() {
         <p>Complete uma partida para aparecer aqui!</p>
       </div>
     `;
+    // Remove botão PDF do header se existir (estado de volta ao ranking vazio)
+    const h = document.querySelector('#modal-ranking .modal-header');
+    const b = h.querySelector('.btn-export-pdf-header');
+    if (b) b.remove();
     return;
   }
 
   const medals = ['🥇', '🥈', '🥉'];
-
-  const items = ranking.map((r, i) => {
-    const medal = medals[i] || `#${i + 1}`;
+  const items  = ranking.map((r, i) => {
+    const medal   = medals[i] || `#${i + 1}`;
     const acertos = r.totalCorrect || 0;
     const erros   = r.totalWrong  || 0;
     const total   = acertos + erros;
@@ -840,14 +634,18 @@ function renderRanking() {
     `;
   }).join('');
 
-  document.getElementById('ranking-body').innerHTML = `
-    <div class="ranking-export-bar">
-      <button class="btn-export-pdf" id="btn-export-pdf">📄 Exportar PDF</button>
-    </div>
-    <div class="player-list">${items}</div>
-  `;
+  document.getElementById('ranking-body').innerHTML = `<div class="player-list">${items}</div>`;
 
-  document.getElementById('btn-export-pdf').addEventListener('click', exportRankingPDF);
+  // Botão PDF no cabeçalho do modal (ao lado do título)
+  const rankingHeader = document.querySelector('#modal-ranking .modal-header');
+  let existingPdfBtn  = rankingHeader.querySelector('.btn-export-pdf-header');
+  if (!existingPdfBtn) {
+    const pdfBtn = document.createElement('button');
+    pdfBtn.className   = 'btn-export-pdf-header';
+    pdfBtn.textContent = '📄 PDF';
+    pdfBtn.addEventListener('click', exportRankingPDF);
+    rankingHeader.insertBefore(pdfBtn, rankingHeader.querySelector('.modal-close'));
+  }
 
   document.querySelectorAll('.player-list-item').forEach(el => {
     el.addEventListener('click', () => {
@@ -858,14 +656,19 @@ function renderRanking() {
 }
 
 function renderPlayerDetail(player, rankIndex) {
-  const medals = ['🥇', '🥈', '🥉'];
-  const medal  = medals[rankIndex] || `#${rankIndex + 1}`;
+  const medals  = ['🥇', '🥈', '🥉'];
+  const medal   = medals[rankIndex] || `#${rankIndex + 1}`;
   const acertos = player.totalCorrect || 0;
   const erros   = player.totalWrong   || 0;
   const total   = acertos + erros;
   const pct     = total > 0 ? Math.round(acertos / total * 100) : 0;
 
   document.getElementById('ranking-modal-title').textContent = '📊 Perfil';
+
+  // Remove o botão PDF do cabeçalho ao entrar no perfil
+  const profileHeader = document.querySelector('#modal-ranking .modal-header');
+  const pdfHeaderBtn  = profileHeader.querySelector('.btn-export-pdf-header');
+  if (pdfHeaderBtn) pdfHeaderBtn.remove();
 
   document.getElementById('ranking-body').innerHTML = `
     <div class="player-detail">
@@ -912,7 +715,6 @@ function renderHistory() {
     `;
     return;
   }
-
   const items = [...state.history].reverse().map((h, i) => `
     <div class="history-item">
       <span class="history-num">#${state.history.length - i}</span>
@@ -924,16 +726,15 @@ function renderHistory() {
       <span class="history-result">${h.result === 'correct' ? '✅' : h.result === 'wrong' ? '❌' : '⏭️'}</span>
     </div>
   `).join('');
-
   document.getElementById('history-body').innerHTML = `<div class="history-list">${items}</div>`;
 }
 
 // =====================================================
-// MODAL: ERROU – Estatísticas + Ranking COMPLETO
+// MODAL: ERROU – Ranking completo
 // =====================================================
 
 function renderWrongModal() {
-  const pct = state.totalSpins > 0 ? Math.round(state.correct / state.totalSpins * 100) : 0;
+  const pct     = state.totalSpins > 0 ? Math.round(state.correct / state.totalSpins * 100) : 0;
   const elapsed = getElapsedSeconds();
   const ranking = loadRanking();
 
@@ -946,17 +747,16 @@ function renderWrongModal() {
     isCurrent:    true,
   };
 
-  const others = ranking.filter(r => r.name.toLowerCase() !== state.playerName.toLowerCase());
+  const others   = ranking.filter(r => r.name.toLowerCase() !== state.playerName.toLowerCase());
   const combined = [...others, currentEntry]
     .sort((a, b) => b.bestPct - a.bestPct || b.totalCorrect - a.totalCorrect);
 
   const medals = ['🥇', '🥈', '🥉'];
 
-  // Exibe TODOS os jogadores do ranking completo
   const rows = combined.map((r, globalIdx) => {
     const isCurrent = !!r.isCurrent;
-    const medal = medals[globalIdx] || `#${globalIdx + 1}`;
-    const pctW = Math.max(4, r.bestPct);
+    const medal     = medals[globalIdx] || `#${globalIdx + 1}`;
+    const pctW      = Math.max(4, r.bestPct);
     return `
       <tr class="${isCurrent ? 'current-player' : ''}">
         <td>${isCurrent ? '➤' : medal}</td>
@@ -976,9 +776,7 @@ function renderWrongModal() {
          Complete mais partidas para ver a comparação com outros jogadores.
        </p>`
     : `<table class="wrong-ranking-table">
-        <thead>
-          <tr><th>#</th><th>Jogador</th><th>Melhor %</th><th>Acertos</th><th>Erros</th></tr>
-        </thead>
+        <thead><tr><th>#</th><th>Jogador</th><th>Melhor %</th><th>Acertos</th><th>Erros</th></tr></thead>
         <tbody>${rows}</tbody>
        </table>`;
 
@@ -1018,15 +816,15 @@ function renderWrongModal() {
 // =====================================================
 
 function startGame(name) {
-  state.playerName  = name.trim();
-  state.remaining   = [...TEAMS];
-  state.drawn       = [];
-  state.history     = [];
-  state.correct     = 0;
-  state.wrong       = 0;
-  state.streak      = 0;
-  state.bestStreak  = 0;
-  state.totalSpins  = 0;
+  state.playerName    = name.trim();
+  state.remaining     = [...TEAMS];
+  state.drawn         = [];
+  state.history       = [];
+  state.correct       = 0;
+  state.wrong         = 0;
+  state.streak        = 0;
+  state.bestStreak    = 0;
+  state.totalSpins    = 0;
   state.currentWinner = null;
   state.revealed      = false;
   state.answered      = false;
@@ -1037,7 +835,8 @@ function startGame(name) {
   document.getElementById('screen-welcome').classList.remove('active');
   document.getElementById('screen-game').classList.add('active');
 
-  document.getElementById('display-name').textContent = state.playerName;
+  document.getElementById('display-name').textContent  = state.playerName;
+  document.getElementById('time-display').textContent  = '00:00'; // reseta exibição do timer
 
   updateInfoBar();
   buildStrip();
@@ -1050,10 +849,8 @@ function returnToWelcome() {
   cancelAnimationFrame(animFrameId);
   stopTimer();
   stopSpinSound();
-
   document.getElementById('screen-game').classList.remove('active');
   document.getElementById('screen-welcome').classList.add('active');
-
   ['modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
 }
 
@@ -1066,9 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputName = document.getElementById('player-name');
   const btnStart  = document.getElementById('btn-start');
 
-  inputName.addEventListener('keydown', e => {
-    if (e.key === 'Enter') btnStart.click();
-  });
+  inputName.addEventListener('keydown', e => { if (e.key === 'Enter') btnStart.click(); });
 
   btnStart.addEventListener('click', () => {
     const name = inputName.value.trim();
@@ -1087,13 +882,9 @@ document.addEventListener('DOMContentLoaded', () => {
       errEl.textContent = `❌ O nome "${name}" já existe no ranking. Escolha um nome diferente.`;
       errEl.classList.remove('hidden');
       inputName.select();
-      setTimeout(() => {
-        inputName.style.borderColor = '';
-        errEl.classList.add('hidden');
-      }, 3000);
+      setTimeout(() => { inputName.style.borderColor = ''; errEl.classList.add('hidden'); }, 3000);
       return;
     }
-
     startGame(name);
   });
 
@@ -1140,11 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.streak++;
     state.bestStreak = Math.max(state.bestStreak, state.streak);
 
-    state.history.push({
-      team:   state.currentWinner,
-      result: 'correct',
-      time:   new Date().toLocaleTimeString('pt-BR'),
-    });
+    state.history.push({ team: state.currentWinner, result: 'correct', time: new Date().toLocaleTimeString('pt-BR') });
 
     updateInfoBar();
     playCorrectSound();
@@ -1155,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-wrong').disabled   = true;
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '✅ Acerto registrado!';
-    fb.className = 'answer-feedback-inline is-correct';
+    fb.className   = 'answer-feedback-inline is-correct';
 
     if (state.remaining.length === 0) {
       setTimeout(() => showGameOver(), 600);
@@ -1165,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnReveal.classList.remove('revealed');
       btnReveal.classList.add('btn-spin-inline');
       btnReveal.disabled = false;
-      btnReveal.onclick = () => doSpin();
+      btnReveal.onclick  = () => doSpin();
     }
   });
 
@@ -1175,11 +962,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.wrong++;
     state.streak = 0;
 
-    state.history.push({
-      team:   state.currentWinner,
-      result: 'wrong',
-      time:   new Date().toLocaleTimeString('pt-BR'),
-    });
+    state.history.push({ team: state.currentWinner, result: 'wrong', time: new Date().toLocaleTimeString('pt-BR') });
 
     updateInfoBar();
     playWrongSound();
@@ -1189,14 +972,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-wrong').disabled   = true;
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '❌ Erro registrado!';
-    fb.className = 'answer-feedback-inline is-wrong';
+    fb.className   = 'answer-feedback-inline is-wrong';
 
     setTimeout(() => { renderWrongModal(); openModal('modal-wrong'); }, 450);
   });
 
-  document.getElementById('btn-spin-again').addEventListener('click', () => {
-    doSpin();
-  });
+  document.getElementById('btn-spin-again').addEventListener('click', () => doSpin());
 
   document.getElementById('btn-wrong-close').addEventListener('click', () => {
     closeModal('modal-wrong');
