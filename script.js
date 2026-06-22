@@ -849,6 +849,9 @@ function returnToWelcome() {
   cancelAnimationFrame(animFrameId);
   stopTimer();
   stopSpinSound();
+  // Reseta a visualização do cronômetro para o próximo jogador (apenas visual)
+  const timeEl = document.getElementById('time-display');
+  if (timeEl) timeEl.textContent = '00:00';
   document.getElementById('screen-game').classList.remove('active');
   document.getElementById('screen-welcome').classList.add('active');
   ['modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
@@ -1006,6 +1009,25 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal('modal-gameover');
     renderRanking();
     openModal('modal-ranking');
+
+    // Bloqueia fechamento acidental clicando fora do modal de ranking
+    // quando ele é aberto a partir da tela de fim de jogo.
+    const rankingModal   = document.getElementById('modal-ranking');
+    const rankingOverlay = rankingModal.querySelector('.modal-overlay');
+    const prevPE         = rankingOverlay.style.pointerEvents;
+    rankingOverlay.style.pointerEvents = 'none';
+
+    // Substitui o botão ✕ por um clone sem data-close, para que o
+    // handler global não feche o modal — só nosso listener controlado.
+    const oldClose = rankingModal.querySelector('.modal-close');
+    const newClose = oldClose.cloneNode(true);
+    newClose.removeAttribute('data-close');
+    oldClose.parentNode.replaceChild(newClose, oldClose);
+    newClose.addEventListener('click', () => {
+      rankingOverlay.style.pointerEvents = prevPE;
+      closeModal('modal-ranking');
+      returnToWelcome();
+    });
   });
 
   let resizeTimer;
