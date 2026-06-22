@@ -535,6 +535,7 @@ function onSpinComplete(winner) {
 
   highlightWinner(winner.id);
   updateInfoBar();
+  setSpinButtonEnabled(true);  // re-habilita btn-spin para a próxima rodada
   showResultControls();
   pauseTimer();    // pausa enquanto jogador decide
   startIdle();     // volta a rolar devagar
@@ -926,7 +927,7 @@ function returnToWelcome() {
   document.getElementById('screen-welcome').classList.add('active');
 
   // Fecha todos os modais
-  ['modal-stats', 'modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
+  ['modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
 }
 
 // =====================================================
@@ -969,6 +970,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-ranking-welcome').addEventListener('click', () => {
+    document.getElementById('tab-ranking').classList.add('active');
+    document.getElementById('tab-stats').classList.remove('active');
+    document.getElementById('ranking-body').classList.remove('hidden');
+    document.getElementById('stats-body').classList.add('hidden');
     renderRanking();
     openModal('modal-ranking');
   });
@@ -998,8 +1003,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-stats').addEventListener('click', () => {
+    // Abre modal-ranking na aba Estatísticas
+    document.getElementById('tab-stats').classList.add('active');
+    document.getElementById('tab-ranking').classList.remove('active');
+    document.getElementById('stats-body').classList.remove('hidden');
+    document.getElementById('ranking-body').classList.add('hidden');
     renderStats();
-    openModal('modal-stats');
+    openModal('modal-ranking');
   });
 
   document.getElementById('btn-history-btn').addEventListener('click', () => {
@@ -1008,6 +1018,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-ranking-game').addEventListener('click', () => {
+    document.getElementById('tab-ranking').classList.add('active');
+    document.getElementById('tab-stats').classList.remove('active');
+    document.getElementById('ranking-body').classList.remove('hidden');
+    document.getElementById('stats-body').classList.add('hidden');
     renderRanking();
     openModal('modal-ranking');
   });
@@ -1133,6 +1147,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-gameover-ranking').addEventListener('click', () => {
     closeModal('modal-gameover');
+    document.getElementById('tab-ranking').classList.add('active');
+    document.getElementById('tab-stats').classList.remove('active');
+    document.getElementById('ranking-body').classList.remove('hidden');
+    document.getElementById('stats-body').classList.add('hidden');
     renderRanking();
     openModal('modal-ranking');
   });
