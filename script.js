@@ -10,62 +10,66 @@
 // =====================================================
 
 const TEAMS = [
-  // Anfitriões (CONCACAF)
-  { id: 1,  name: 'Estados Unidos',    code: 'us' },
-  { id: 2,  name: 'Canadá',            code: 'ca' },
-  { id: 3,  name: 'México',            code: 'mx' },
-  // CONMEBOL
-  { id: 4,  name: 'Brasil',            code: 'br' },
-  { id: 5,  name: 'Argentina',         code: 'ar' },
-  { id: 6,  name: 'Colômbia',          code: 'co' },
-  { id: 7,  name: 'Uruguai',           code: 'uy' },
-  { id: 8,  name: 'Equador',           code: 'ec' },
-  { id: 9,  name: 'Venezuela',         code: 've' },
-  // UEFA
-  { id: 10, name: 'Alemanha',          code: 'de' },
-  { id: 11, name: 'França',            code: 'fr' },
-  { id: 12, name: 'Espanha',           code: 'es' },
-  { id: 13, name: 'Inglaterra',        code: 'gb-eng' },
-  { id: 14, name: 'Portugal',          code: 'pt' },
-  { id: 15, name: 'Holanda',           code: 'nl' },
-  { id: 16, name: 'Itália',            code: 'it' },
-  { id: 17, name: 'Bélgica',           code: 'be' },
-  { id: 18, name: 'Áustria',           code: 'at' },
-  { id: 19, name: 'Suíça',             code: 'ch' },
-  { id: 20, name: 'Croácia',           code: 'hr' },
-  { id: 21, name: 'Sérvia',            code: 'rs' },
-  { id: 22, name: 'Escócia',           code: 'gb-sct' },
-  { id: 23, name: 'Dinamarca',         code: 'dk' },
-  { id: 24, name: 'Turquia',           code: 'tr' },
-  { id: 25, name: 'Hungria',           code: 'hu' },
-  { id: 26, name: 'Eslováquia',        code: 'sk' },
-  // CAF (África)
-  { id: 27, name: 'Marrocos',          code: 'ma' },
-  { id: 28, name: 'Senegal',           code: 'sn' },
-  { id: 29, name: 'Egito',             code: 'eg' },
-  { id: 30, name: 'Nigéria',           code: 'ng' },
-  { id: 31, name: 'África do Sul',     code: 'za' },
-  { id: 32, name: 'R.D. Congo',        code: 'cd' },
-  { id: 33, name: 'Argélia',           code: 'dz' },
-  { id: 34, name: 'Tunísia',           code: 'tn' },
-  { id: 35, name: 'Gana',              code: 'gh' },
-  // AFC (Ásia)
-  { id: 36, name: 'Japão',             code: 'jp' },
-  { id: 37, name: 'Coreia do Sul',     code: 'kr' },
-  { id: 38, name: 'Irã',               code: 'ir' },
-  { id: 39, name: 'Austrália',         code: 'au' },
-  { id: 40, name: 'Arábia Saudita',    code: 'sa' },
-  { id: 41, name: 'Jordânia',          code: 'jo' },
-  { id: 42, name: 'Emirados Árabes',   code: 'ae' },
+  // Grupo A
+  { id:  1, name: 'México',            code: 'mx' },
+  { id:  2, name: 'África do Sul',     code: 'za' },
+  { id:  3, name: 'Coreia do Sul',     code: 'kr' },
+  { id:  4, name: 'Tchéquia',          code: 'cz' },
+  // Grupo B
+  { id:  5, name: 'Canadá',            code: 'ca' },
+  { id:  6, name: 'Bósnia-Herzegovina',code: 'ba' },
+  { id:  7, name: 'Catar',             code: 'qa' },
+  { id:  8, name: 'Suíça',             code: 'ch' },
+  // Grupo C
+  { id:  9, name: 'Brasil',            code: 'br' },
+  { id: 10, name: 'Marrocos',          code: 'ma' },
+  { id: 11, name: 'Haiti',             code: 'ht' },
+  { id: 12, name: 'Escócia',           code: 'gb-sct' },
+  // Grupo D
+  { id: 13, name: 'Estados Unidos',    code: 'us' },
+  { id: 14, name: 'Paraguai',          code: 'py' },
+  { id: 15, name: 'Austrália',         code: 'au' },
+  { id: 16, name: 'Turquia',           code: 'tr' },
+  // Grupo E
+  { id: 17, name: 'Alemanha',          code: 'de' },
+  { id: 18, name: 'Curaçao',           code: 'cw' },
+  { id: 19, name: 'Costa do Marfim',   code: 'ci' },
+  { id: 20, name: 'Equador',           code: 'ec' },
+  // Grupo F
+  { id: 21, name: 'Holanda',           code: 'nl' },
+  { id: 22, name: 'Japão',             code: 'jp' },
+  { id: 23, name: 'Suécia',            code: 'se' },
+  { id: 24, name: 'Tunísia',           code: 'tn' },
+  // Grupo G
+  { id: 25, name: 'Bélgica',           code: 'be' },
+  { id: 26, name: 'Egito',             code: 'eg' },
+  { id: 27, name: 'Irã',               code: 'ir' },
+  { id: 28, name: 'Nova Zelândia',     code: 'nz' },
+  // Grupo H
+  { id: 29, name: 'Espanha',           code: 'es' },
+  { id: 30, name: 'Cabo Verde',        code: 'cv' },
+  { id: 31, name: 'Arábia Saudita',    code: 'sa' },
+  { id: 32, name: 'Uruguai',           code: 'uy' },
+  // Grupo I
+  { id: 33, name: 'França',            code: 'fr' },
+  { id: 34, name: 'Senegal',           code: 'sn' },
+  { id: 35, name: 'Iraque',            code: 'iq' },
+  { id: 36, name: 'Noruega',           code: 'no' },
+  // Grupo J
+  { id: 37, name: 'Argentina',         code: 'ar' },
+  { id: 38, name: 'Argélia',           code: 'dz' },
+  { id: 39, name: 'Áustria',           code: 'at' },
+  { id: 40, name: 'Jordânia',          code: 'jo' },
+  // Grupo K
+  { id: 41, name: 'Portugal',          code: 'pt' },
+  { id: 42, name: 'R.D. Congo',        code: 'cd' },
   { id: 43, name: 'Uzbequistão',       code: 'uz' },
-  // CONCACAF (restante)
-  { id: 44, name: 'Jamaica',           code: 'jm' },
-  { id: 45, name: 'Panamá',            code: 'pa' },
-  { id: 46, name: 'Honduras',          code: 'hn' },
-  // OFC
-  { id: 47, name: 'Nova Zelândia',     code: 'nz' },
-  // Playoff intercontinental
-  { id: 48, name: 'Paraguai',          code: 'py' },
+  { id: 44, name: 'Colômbia',          code: 'co' },
+  // Grupo L
+  { id: 45, name: 'Inglaterra',        code: 'gb-eng' },
+  { id: 46, name: 'Croácia',           code: 'hr' },
+  { id: 47, name: 'Gana',              code: 'gh' },
+  { id: 48, name: 'Panamá',            code: 'pa' },
 ];
 
 // =====================================================
