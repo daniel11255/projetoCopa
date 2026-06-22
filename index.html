@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -74,17 +75,14 @@
     <!-- Roulette Section -->
     <div class="roulette-section">
       <div class="roulette-wrapper" id="roulette-wrapper">
-        <!-- Marker (seta central) -->
         <div class="roulette-marker">
           <div class="marker-arrow top">▼</div>
           <div class="marker-line"></div>
           <div class="marker-arrow bottom">▲</div>
         </div>
-        <!-- Track container -->
         <div class="roulette-container" id="roulette-container">
           <div class="roulette-track" id="roulette-track"></div>
         </div>
-        <!-- Side fades -->
         <div class="roulette-fade left"></div>
         <div class="roulette-fade right"></div>
       </div>
@@ -95,11 +93,10 @@
       <button id="btn-spin" class="btn btn-spin">Girar</button>
     </div>
 
-    <!-- Result Controls (sub-aba após o sorteio) -->
+    <!-- Result Controls -->
     <div class="result-controls hidden" id="result-controls">
       <div class="result-phase" id="phase-question">
 
-        <!-- Bandeira grande -->
         <div class="flag-stage">
           <div class="flag-stage-glow"></div>
           <img id="spotlight-flag-img" src="" alt="" class="flag-stage-img" />
@@ -109,21 +106,18 @@
           <span class="spotlight-remaining" id="spotlight-remaining">47 restantes</span>
         </div>
 
-        <!-- Nome do país (escondido até revelar) -->
         <div class="country-name-wrapper">
           <div id="country-name-blur" class="country-name-blur">██████████</div>
           <div id="country-name-reveal" class="country-name-reveal hidden"></div>
         </div>
         <button id="btn-reveal" class="btn btn-reveal">Mostrar nome da bandeira</button>
 
-        <!-- Resposta (ativa após revelar) -->
         <div class="answer-section">
           <button id="btn-correct" class="btn btn-correct" disabled>✅ Acertou</button>
           <button id="btn-wrong" class="btn btn-wrong" disabled>❌ Errou</button>
         </div>
         <div id="answer-feedback" class="answer-feedback-inline hidden"></div>
 
-        <!-- Aparece somente após clicar em Acertou -->
         <button id="btn-spin-again" class="btn btn-spin hidden">Girar novamente</button>
 
       </div>
@@ -131,24 +125,21 @@
 
   </div>
 
-  <!-- ===== MODAL: ERROU – Stats + Comparação ===== -->
+  <!-- ===== MODAL: ERROU ===== -->
   <div id="modal-wrong" class="modal hidden">
-    <div class="modal-overlay" data-close="modal-wrong"></div>
+    <div class="modal-overlay"></div>
     <div class="modal-content">
       <div class="modal-header wrong-header">
         <h2>❌ Não foi dessa vez!</h2>
-        <button class="modal-close" data-close="modal-wrong">✕</button>
       </div>
-      <div class="modal-body" id="wrong-body">
-        <!-- Filled by JS -->
-      </div>
+      <div class="modal-body" id="wrong-body"></div>
       <div class="modal-footer">
         <button id="btn-wrong-close" class="btn btn-outline-sm">Fechar e continuar</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== MODAL: RANKING + ESTATÍSTICAS ===== -->
+  <!-- ===== MODAL: RANKING ===== -->
   <div id="modal-ranking" class="modal hidden">
     <div class="modal-overlay" data-close="modal-ranking"></div>
     <div class="modal-content">
@@ -156,12 +147,7 @@
         <h2 id="ranking-modal-title">🏅 Ranking</h2>
         <button class="modal-close" data-close="modal-ranking">✕</button>
       </div>
-      <div class="modal-tabs">
-        <button class="modal-tab active" id="tab-ranking">🏅 Ranking</button>
-        <button class="modal-tab" id="tab-stats">📊 Estatísticas</button>
-      </div>
       <div class="modal-body" id="ranking-body"></div>
-      <div class="modal-body hidden" id="stats-body"></div>
     </div>
   </div>
 
@@ -173,9 +159,7 @@
         <h2>📜 Histórico da Partida</h2>
         <button class="modal-close" data-close="modal-history">✕</button>
       </div>
-      <div class="modal-body" id="history-body">
-        <!-- Filled by JS -->
-      </div>
+      <div class="modal-body" id="history-body"></div>
     </div>
   </div>
 
@@ -194,9 +178,10 @@
     </div>
   </div>
 
-  <!-- ===== CONFETTI CONTAINER ===== -->
+  <!-- ===== CONFETTI ===== -->
   <div id="confetti-container" aria-hidden="true"></div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

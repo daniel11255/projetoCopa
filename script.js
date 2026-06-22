@@ -1,3 +1,4 @@
+
 /**
  * =====================================================
  * COPA DO MUNDO 2026 – JOGO DAS BANDEIRAS
@@ -76,10 +77,10 @@ const TEAMS = [
 // CONFIGURAÇÃO DA ROLETA
 // =====================================================
 
-const ITEM_W     = 150;   // largura total de cada item (px) – igual a --item-w do CSS + margens
-const NUM_COPIES = 12;    // cópias do array base na faixa
-const COPY_SIZE  = TEAMS.length; // 48
-const TOTAL_ITEMS = NUM_COPIES * COPY_SIZE; // 576
+const ITEM_W     = 150;
+const NUM_COPIES = 12;
+const COPY_SIZE  = TEAMS.length;
+const TOTAL_ITEMS = NUM_COPIES * COPY_SIZE;
 
 // =====================================================
 // ESTADO DO JOGO
@@ -87,18 +88,18 @@ const TOTAL_ITEMS = NUM_COPIES * COPY_SIZE; // 576
 
 const state = {
   playerName:    '',
-  remaining:     [],       // seleções ainda não sorteadas
-  drawn:         [],       // seleções já sorteadas
-  history:       [],       // histórico de sorteios desta sessão
+  remaining:     [],
+  drawn:         [],
+  history:       [],
   correct:       0,
   wrong:         0,
   streak:        0,
   bestStreak:    0,
   totalSpins:    0,
   currentWinner: null,
-  startTime:      null,  // definido no PRIMEIRO spin (não ao iniciar o jogo)
-  pausedAt:       null,  // instante em que o timer foi pausado
-  totalPausedMs:  0,     // total de ms pausados
+  startTime:      null,
+  pausedAt:       null,
+  totalPausedMs:  0,
   soundEnabled:   true,
   spinning:       false,
   revealed:       false,
@@ -109,10 +110,10 @@ const state = {
 // ESTADO DA ROLETA
 // =====================================================
 
-let stripOrderBase = [];  // ordem base embaralhada dos times
-let stripOrder = [];       // faixa completa (NUM_COPIES vezes a base)
-let currentOffset = 0;    // deslocamento atual da faixa (px)
-let animFrameId = null;   // ID do requestAnimationFrame
+let stripOrderBase = [];
+let stripOrder = [];
+let currentOffset = 0;
+let animFrameId = null;
 
 // =====================================================
 // ÁUDIO (Web Audio API)
@@ -127,7 +128,6 @@ function getAudioCtx() {
   return audioCtx;
 }
 
-/** Toca um tom simples */
 function playTone(freq, duration, type = 'sine', gain = 0.25) {
   if (!state.soundEnabled) return;
   try {
@@ -142,10 +142,9 @@ function playTone(freq, duration, type = 'sine', gain = 0.25) {
     gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + duration);
-  } catch (e) { /* silencia erros de áudio */ }
+  } catch (e) {}
 }
 
-/** Som de tick acelerado durante o giro */
 function startSpinSound() {
   if (!state.soundEnabled) return;
   spinTickDelay = 180;
@@ -162,19 +161,16 @@ function stopSpinSound() {
   spinTickTimer = null;
 }
 
-/** Som ao parar */
 function playStopSound() {
   playTone(880, 0.25);
   setTimeout(() => playTone(1100, 0.35), 150);
   setTimeout(() => playTone(1320, 0.5), 300);
 }
 
-/** Som de acerto */
 function playCorrectSound() {
   [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => playTone(f, 0.3, 'sine', 0.2), i * 110));
 }
 
-/** Som de erro */
 function playWrongSound() {
   [350, 280, 220].forEach((f, i) => setTimeout(() => playTone(f, 0.25, 'sawtooth', 0.15), i * 130));
 }
@@ -207,7 +203,7 @@ function launchConfetti() {
 }
 
 // =====================================================
-// VIBRAÇÃO (dispositivos móveis)
+// VIBRAÇÃO
 // =====================================================
 
 function vibrate(pattern) {
@@ -294,7 +290,6 @@ function saveRanking(ranking) {
   localStorage.setItem(LS_KEY, JSON.stringify(ranking));
 }
 
-/** Atualiza ou insere o jogador no ranking */
 function updateRanking() {
   const ranking = loadRanking();
   const pct = state.totalSpins > 0 ? Math.round(state.correct / state.totalSpins * 100) : 0;
@@ -303,12 +298,14 @@ function updateRanking() {
 
   if (idx >= 0) {
     const r = ranking[idx];
+    const elapsed = getElapsedSeconds();
     r.totalGames  += 1;
     r.totalCorrect += state.correct;
     r.totalWrong   += state.wrong;
     r.bestStreak   = Math.max(r.bestStreak, state.bestStreak);
     r.bestPct      = Math.max(r.bestPct, pct);
     r.lastPlayed   = Date.now();
+    if (!r.bestTime || elapsed < r.bestTime) r.bestTime = elapsed;
   } else {
     ranking.push({
       name:         state.playerName,
@@ -318,11 +315,11 @@ function updateRanking() {
       bestStreak:   state.bestStreak,
       bestPct:      pct,
       lastPlayed:   Date.now(),
+      bestTime:     getElapsedSeconds(),
     });
   }
 
-  // Ordena por % de acerto (decrescente) e depois por acertos totais
-  ranking.sort((a, b) => b.bestPct - a.bestPct || b.totalCorrect - a.totalCorrect);
+  ranking.sort((a, b) => b.totalCorrect - a.totalCorrect || (a.bestTime || Infinity) - (b.bestTime || Infinity));
   saveRanking(ranking);
 }
 
@@ -330,7 +327,6 @@ function updateRanking() {
 // CONSTRUÇÃO DA FAIXA DA ROLETA
 // =====================================================
 
-/** Embaralha os times e constrói a faixa com NUM_COPIES cópias */
 function buildStrip() {
   stripOrderBase = shuffle(TEAMS);
   stripOrder = [];
@@ -339,7 +335,6 @@ function buildStrip() {
   const track = document.getElementById('roulette-track');
   track.innerHTML = '';
 
-  // Define largura total explícita para evitar quebra de linha no flex
   track.style.width = (TOTAL_ITEMS * ITEM_W) + 'px';
   track.style.minWidth = (TOTAL_ITEMS * ITEM_W) + 'px';
 
@@ -355,7 +350,6 @@ function buildStrip() {
     track.appendChild(item);
   });
 
-  // Posição inicial: centraliza no início da cópia 3 (índice 2 * COPY_SIZE)
   const containerW = getContainerWidth();
   const startCopy = 2;
   currentOffset = startCopy * COPY_SIZE * ITEM_W - containerW / 2 + ITEM_W / 2;
@@ -371,15 +365,14 @@ function setTrackOffset(offset) {
 }
 
 // =====================================================
-// ANIMAÇÃO IDLE (rolagem lenta contínua)
+// ANIMAÇÃO IDLE
 // =====================================================
 
 function startIdle() {
   cancelAnimationFrame(animFrameId);
   state.spinning = false;
 
-  const IDLE_SPEED  = 0.6; // px por frame
-  // Reset quando ultrapassar a 6ª cópia: volta 3 cópias (posição visual idêntica)
+  const IDLE_SPEED  = 0.6;
   const WRAP_AT     = 6 * COPY_SIZE * ITEM_W;
   const WRAP_JUMP   = 3 * COPY_SIZE * ITEM_W;
 
@@ -394,15 +387,9 @@ function startIdle() {
 }
 
 // =====================================================
-// EASING (curva de animação do giro)
+// EASING
 // =====================================================
 
-/**
- * Curva de slot machine:
- * 0–15%  → acelera (ease-in)
- * 15–55% → gira rápido (linear)
- * 55–100% → desacelera (ease-out cúbico)
- */
 function slotEasing(t) {
   if (t < 0.15) {
     const p = t / 0.15;
@@ -420,7 +407,6 @@ function slotEasing(t) {
 // SORTEIO E SPIN
 // =====================================================
 
-/** Calcula o offset que centraliza determinado team em determinada cópia */
 function calcOffset(teamId, copyIndex) {
   const posInBase = stripOrderBase.findIndex(t => t.id === teamId);
   const stripIdx  = copyIndex * COPY_SIZE + posInBase;
@@ -428,9 +414,8 @@ function calcOffset(teamId, copyIndex) {
   return stripIdx * ITEM_W - containerW / 2 + ITEM_W / 2;
 }
 
-/** Encontra o offset-alvo, garantindo rotações suficientes */
 function findTargetOffset(team) {
-  const MIN_ADVANCE = 4 * COPY_SIZE * ITEM_W; // mínimo de 4 voltas
+  const MIN_ADVANCE = 4 * COPY_SIZE * ITEM_W;
 
   for (let copy = 0; copy < NUM_COPIES; copy++) {
     const offset = calcOffset(team.id, copy);
@@ -438,19 +423,16 @@ function findTargetOffset(team) {
       return offset;
     }
   }
-  // Fallback: última cópia disponível
   return calcOffset(team.id, NUM_COPIES - 1);
 }
 
-/** Tira o winner da faixa visualmente (destaque) */
 function highlightWinner(teamId) {
   document.querySelectorAll('.flag-item').forEach(el => {
     el.classList.remove('winner');
   });
   const containerW = getContainerWidth();
-  const centerAbsolute = currentOffset + containerW / 2; // px no strip
+  const centerAbsolute = currentOffset + containerW / 2;
 
-  // Encontra o item mais próximo do centro
   const items = document.querySelectorAll('.flag-item');
   let closest = null;
   let closestDist = Infinity;
@@ -465,24 +447,13 @@ function highlightWinner(teamId) {
   if (closest) closest.classList.add('winner');
 }
 
-/** Executa o giro da roleta */
 function doSpin() {
   if (state.spinning) return;
   if (state.remaining.length === 0) { showGameOver(); return; }
 
-  // Inicia o timer apenas no primeiro giro
-  if (!state.startTime) {
-    state.startTime = Date.now();
-    startTimer();
-  } else {
-    resumeTimer(); // retoma após pausa
-  }
-
-  // Limpa estado visual do sorteio anterior
   document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
   hideResultControls();
 
-  // Escolhe o vencedor
   const winner = state.remaining[Math.floor(Math.random() * state.remaining.length)];
   state.currentWinner = winner;
   state.totalSpins++;
@@ -493,13 +464,12 @@ function doSpin() {
   startSpinSound();
   vibrate([50, 30, 50]);
 
-  // Botão de girar desativado
   setSpinButtonEnabled(false);
 
   const startOffset = currentOffset;
   const targetOffset = findTargetOffset(winner);
   const totalDelta = targetOffset - startOffset;
-  const DURATION = 500; // ms
+  const DURATION = 500;
   const startTime = performance.now();
 
   function frame(now) {
@@ -513,7 +483,6 @@ function doSpin() {
     if (t < 1) {
       animFrameId = requestAnimationFrame(frame);
     } else {
-      // Roleta parou
       currentOffset = targetOffset;
       setTrackOffset(currentOffset);
       onSpinComplete(winner);
@@ -523,7 +492,6 @@ function doSpin() {
   animFrameId = requestAnimationFrame(frame);
 }
 
-/** Chamado quando a roleta para */
 function onSpinComplete(winner) {
   stopSpinSound();
   playStopSound();
@@ -533,16 +501,21 @@ function onSpinComplete(winner) {
   state.revealed  = false;
   state.answered  = false;
 
-  // Remove o vencedor dos restantes
   state.remaining = state.remaining.filter(t => t.id !== winner.id);
   state.drawn.push(winner);
 
   highlightWinner(winner.id);
   updateInfoBar();
-  setSpinButtonEnabled(true);  // re-habilita btn-spin para a próxima rodada
+  setSpinButtonEnabled(true);
   showResultControls();
-  pauseTimer();    // pausa enquanto jogador decide
-  startIdle();     // volta a rolar devagar
+  if (!state.startTime) {
+    state.startTime = Date.now();
+    state.pausedAt = null;
+    startTimer();
+  } else {
+    resumeTimer();
+  }
+  startIdle();
 }
 
 // =====================================================
@@ -563,7 +536,6 @@ function showResultControls() {
   document.getElementById('game-controls').classList.add('hidden');
   document.getElementById('result-controls').classList.remove('hidden');
 
-  // Atualiza imagem e badges
   const winner = state.currentWinner;
   document.getElementById('spotlight-flag-img').src = getFlagUrl(winner.code);
   document.getElementById('spotlight-flag-img').alt = winner.name;
@@ -571,27 +543,23 @@ function showResultControls() {
   document.getElementById('spotlight-remaining').textContent =
     `${state.remaining.length} ${state.remaining.length === 1 ? 'restante' : 'restantes'}`;
 
-  // Reset do nome
   document.getElementById('country-name-blur').classList.remove('hidden');
   document.getElementById('country-name-reveal').classList.add('hidden');
   document.getElementById('country-name-reveal').textContent = '';
 
-  // Reset botão revelar
   const btnReveal = document.getElementById('btn-reveal');
   btnReveal.textContent = 'Mostrar nome da bandeira';
-  btnReveal.classList.remove('revealed');
+  btnReveal.classList.remove('revealed', 'btn-spin-inline');
   btnReveal.disabled = false;
+  btnReveal.onclick = null;
 
-  // Acertou/Errou bloqueados até revelar
   document.getElementById('btn-correct').disabled = true;
   document.getElementById('btn-wrong').disabled   = true;
 
-  // Girar novamente só aparece após "Acertou" – mantém oculto até lá
   const spinAgainBtn = document.getElementById('btn-spin-again');
   spinAgainBtn.disabled = true;
   spinAgainBtn.classList.add('hidden');
 
-  // Oculta feedback anterior
   const fb = document.getElementById('answer-feedback');
   fb.className = 'answer-feedback-inline hidden';
   fb.textContent = '';
@@ -606,7 +574,6 @@ function updateInfoBar() {
 }
 
 function prepareNewSpin() {
-  // doSpin() já faz a limpeza; esta função fica para uso externo (botão Girar principal)
   hideResultControls();
   document.querySelectorAll('.flag-item.winner').forEach(el => el.classList.remove('winner'));
   setSpinButtonEnabled(true);
@@ -634,14 +601,6 @@ function showGameOver() {
     <div class="gameover-stat">
       <div class="gameover-stat-value" style="color:#ff6b6b">${state.wrong}</div>
       <div class="gameover-stat-label">Erros</div>
-    </div>
-    <div class="gameover-stat">
-      <div class="gameover-stat-value" style="color:#FFDF00">${pct}%</div>
-      <div class="gameover-stat-label">Aproveit.</div>
-    </div>
-    <div class="gameover-stat">
-      <div class="gameover-stat-value" style="color:#ff9ff3">${state.bestStreak}</div>
-      <div class="gameover-stat-label">Melhor seq.</div>
     </div>
   `;
 
@@ -689,16 +648,8 @@ function renderStats() {
         <div class="stat-value red">${state.wrong}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">% de acertos</div>
-        <div class="stat-value highlight">${pct}%</div>
-      </div>
-      <div class="stat-card">
         <div class="stat-label">Sequência atual</div>
         <div class="stat-value">${state.streak} 🔥</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Melhor sequência</div>
-        <div class="stat-value highlight">${state.bestStreak} ⭐</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Países sorteados</div>
@@ -716,8 +667,149 @@ function renderStats() {
   `;
 }
 
-function renderRanking() {
+// =====================================================
+// EXPORTAR PDF DO RANKING
+// =====================================================
+
+function exportRankingPDF() {
+  // Pede o nome do arquivo antes de gerar
+  let fileName = prompt('Nome do arquivo PDF:', 'ranking-copa2026');
+  if (fileName === null) return; // usuário cancelou
+  fileName = fileName.trim() || 'ranking-copa2026';
+  if (!fileName.toLowerCase().endsWith('.pdf')) fileName += '.pdf';
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const ranking = loadRanking();
+
+  const GREEN  = [0, 156, 59];
+  const YELLOW = [255, 223, 0];
+  const DARK   = [20, 20, 40];
+  const WHITE  = [255, 255, 255];
+  const LIGHT  = [240, 240, 248];
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 14;
+  const contentW = pageW - margin * 2;
+
+  // Cabeçalho
+  doc.setFillColor(...GREEN);
+  doc.rect(0, 0, pageW, 32, 'F');
+  doc.setFillColor(...YELLOW);
+  doc.rect(0, 30, pageW, 3, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(...WHITE);
+  doc.text('Copa do Mundo 2026', pageW / 2, 13, { align: 'center' });
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Jogo das Bandeiras — Ranking Oficial', pageW / 2, 22, { align: 'center' });
+
+  doc.setFontSize(8);
+  doc.setTextColor(200, 200, 200);
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageW / 2, 28, { align: 'center' });
+
+  let y = 42;
+
+  if (ranking.length === 0) {
+    doc.setTextColor(...DARK);
+    doc.setFontSize(12);
+    doc.text('Nenhum jogador no ranking ainda.', pageW / 2, y, { align: 'center' });
+    doc.save(fileName);
+    return;
+  }
+
+  const posLabels = ['#1', '#2', '#3'];
+  const accentColors = [
+    [255, 215, 0],
+    [192, 192, 192],
+    [205, 127, 50],
+  ];
+
+  ranking.forEach((r, i) => {
+    if (y + 42 > pageH - 14) {
+      doc.addPage();
+      y = 16;
+    }
+
+    const acertos = r.totalCorrect || 0;
+    const erros   = r.totalWrong  || 0;
+    const total   = acertos + erros;
+    const pct     = total > 0 ? Math.round(acertos / total * 100) : 0;
+    const tempo   = r.bestTime ? formatTime(r.bestTime) : '—';
+    const pos     = posLabels[i] || `#${i + 1}`;
+    const accent  = accentColors[i] || GREEN;
+
+    doc.setFillColor(...(i % 2 === 0 ? LIGHT : WHITE));
+    doc.roundedRect(margin, y, contentW, 36, 3, 3, 'F');
+
+    doc.setFillColor(...accent);
+    doc.rect(margin, y, 4, 36, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(...accent);
+    doc.text(pos, margin + 10, y + 13, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...DARK);
+    doc.text(r.name, margin + 18, y + 9);
+
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(margin + 18, y + 12, margin + contentW - 4, y + 12);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 100);
+    doc.text('Classificação:', margin + 18, y + 19);
+    doc.text('Tempo:', margin + 18, y + 26);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...DARK);
+    doc.text(`${i + 1}º lugar`, margin + 46, y + 19);
+    doc.text(tempo, margin + 46, y + 26);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(80, 80, 100);
+    doc.text('Aproveitamento:', margin + 95, y + 19);
+    doc.text('Partidas:', margin + 95, y + 26);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...DARK);
+    doc.text(`${pct}%  (${acertos}/${total} acertos)`, margin + 126, y + 19);
+    doc.text(`${r.totalGames}`, margin + 126, y + 26);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(80, 80, 100);
+    doc.text('Melhor sequência:', margin + 18, y + 33);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...DARK);
+    doc.text(`${r.bestStreak || 0}`, margin + 60, y + 33);
+
+    y += 42;
+  });
+
+  // Rodapé
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('Copa do Mundo 2026 – Jogo das Bandeiras', pageW / 2, pageH - 6, { align: 'center' });
+
+  doc.save(fileName);
+}
+
+// =====================================================
+// RANKING
+// =====================================================
+
+function renderRanking() {
+  document.getElementById('ranking-modal-title').textContent = '🏅 Ranking';
+  const ranking = loadRanking();
+
   if (ranking.length === 0) {
     document.getElementById('ranking-body').innerHTML = `
       <div class="empty-state">
@@ -730,34 +822,84 @@ function renderRanking() {
   }
 
   const medals = ['🥇', '🥈', '🥉'];
-  const rows = ranking.map((r, i) => `
-    <tr>
-      <td><span class="rank-medal">${medals[i] || (i + 1)}</span></td>
-      <td class="rank-name">${r.name}</td>
-      <td>${r.totalGames}</td>
-      <td style="color:#4dce7a">${r.totalCorrect}</td>
-      <td style="color:#ff6b6b">${r.totalWrong}</td>
-      <td><span class="rank-badge">${r.bestPct}%</span></td>
-      <td>${r.bestStreak} ⭐</td>
-    </tr>
-  `).join('');
+
+  const items = ranking.map((r, i) => {
+    const medal = medals[i] || `#${i + 1}`;
+    const acertos = r.totalCorrect || 0;
+    const erros   = r.totalWrong  || 0;
+    const total   = acertos + erros;
+    return `
+      <div class="player-list-item" data-player-index="${i}">
+        <span class="pli-medal">${medal}</span>
+        <div class="pli-info">
+          <span class="pli-name">${r.name}</span>
+          <span class="pli-sub">${r.totalGames} partida${r.totalGames !== 1 ? 's' : ''} · ${acertos}/${total} acertos</span>
+        </div>
+        <span class="pli-arrow">›</span>
+      </div>
+    `;
+  }).join('');
 
   document.getElementById('ranking-body').innerHTML = `
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Jogador</th>
-          <th>Partidas</th>
-          <th>Acertos</th>
-          <th>Erros</th>
-          <th>Melhor %</th>
-          <th>Seq.</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="ranking-export-bar">
+      <button class="btn-export-pdf" id="btn-export-pdf">📄 Exportar PDF</button>
+    </div>
+    <div class="player-list">${items}</div>
   `;
+
+  document.getElementById('btn-export-pdf').addEventListener('click', exportRankingPDF);
+
+  document.querySelectorAll('.player-list-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.playerIndex);
+      renderPlayerDetail(ranking[idx], idx);
+    });
+  });
+}
+
+function renderPlayerDetail(player, rankIndex) {
+  const medals = ['🥇', '🥈', '🥉'];
+  const medal  = medals[rankIndex] || `#${rankIndex + 1}`;
+  const acertos = player.totalCorrect || 0;
+  const erros   = player.totalWrong   || 0;
+  const total   = acertos + erros;
+  const pct     = total > 0 ? Math.round(acertos / total * 100) : 0;
+
+  document.getElementById('ranking-modal-title').textContent = '📊 Perfil';
+
+  document.getElementById('ranking-body').innerHTML = `
+    <div class="player-detail">
+      <button class="btn-back-ranking">← Voltar ao Ranking</button>
+      <div class="player-detail-header">
+        <div class="player-detail-medal">${medal}</div>
+        <div class="player-detail-name">${player.name}</div>
+      </div>
+      <div class="player-detail-grid">
+        <div class="pd-card">
+          <div class="pd-value" style="color:#FFDF00">${player.totalGames}</div>
+          <div class="pd-label">Partidas</div>
+        </div>
+        <div class="pd-card">
+          <div class="pd-value" style="color:#4dce7a">${acertos}</div>
+          <div class="pd-label">Acertos</div>
+        </div>
+        <div class="pd-card">
+          <div class="pd-value" style="color:#ff6b6b">${erros}</div>
+          <div class="pd-label">Erros</div>
+        </div>
+        <div class="pd-card">
+          <div class="pd-value" style="color:#a29bfe">${pct}%</div>
+          <div class="pd-label">Aproveitamento</div>
+        </div>
+        <div class="pd-card pd-card-full">
+          <div class="pd-value" style="color:#74b9ff">${player.bestTime ? formatTime(player.bestTime) : '—'}</div>
+          <div class="pd-label">Melhor tempo</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.querySelector('.btn-back-ranking').addEventListener('click', renderRanking);
 }
 
 function renderHistory() {
@@ -787,7 +929,7 @@ function renderHistory() {
 }
 
 // =====================================================
-// MODAL: ERROU – Estatísticas + Comparação de Ranking
+// MODAL: ERROU – Estatísticas + Ranking COMPLETO
 // =====================================================
 
 function renderWrongModal() {
@@ -795,7 +937,6 @@ function renderWrongModal() {
   const elapsed = getElapsedSeconds();
   const ranking = loadRanking();
 
-  // Cria entrada provisória do jogador atual para comparar
   const currentEntry = {
     name:         state.playerName,
     bestPct:      pct,
@@ -805,21 +946,14 @@ function renderWrongModal() {
     isCurrent:    true,
   };
 
-  // Monta lista de comparação (ranking salvo + jogador atual)
   const others = ranking.filter(r => r.name.toLowerCase() !== state.playerName.toLowerCase());
   const combined = [...others, currentEntry]
     .sort((a, b) => b.bestPct - a.bestPct || b.totalCorrect - a.totalCorrect);
 
-  const currentPos = combined.findIndex(r => r.isCurrent);
   const medals = ['🥇', '🥈', '🥉'];
 
-  // Exibe até 5 jogadores ao redor do atual (2 acima, atual, 2 abaixo)
-  const rangeStart = Math.max(0, currentPos - 2);
-  const rangeEnd   = Math.min(combined.length, currentPos + 3);
-  const slice = combined.slice(rangeStart, rangeEnd);
-
-  const rows = slice.map((r, localIdx) => {
-    const globalIdx = rangeStart + localIdx;
+  // Exibe TODOS os jogadores do ranking completo
+  const rows = combined.map((r, globalIdx) => {
     const isCurrent = !!r.isCurrent;
     const medal = medals[globalIdx] || `#${globalIdx + 1}`;
     const pctW = Math.max(4, r.bestPct);
@@ -859,14 +993,6 @@ function renderWrongModal() {
         <div class="wrong-stat-value" style="color:#ff6b6b">${state.wrong}</div>
         <div class="wrong-stat-label">Erros</div>
       </div>
-      <div class="wrong-stat">
-        <div class="wrong-stat-value" style="color:#FFDF00">${pct}%</div>
-        <div class="wrong-stat-label">Aproveit.</div>
-      </div>
-      <div class="wrong-stat">
-        <div class="wrong-stat-value">${state.bestStreak}⭐</div>
-        <div class="wrong-stat-label">Melhor seq.</div>
-      </div>
     </div>
     <div class="wrong-stats-row">
       <div class="wrong-stat">
@@ -904,11 +1030,10 @@ function startGame(name) {
   state.currentWinner = null;
   state.revealed      = false;
   state.answered      = false;
-  state.startTime     = null;   // inicia no primeiro giro
+  state.startTime     = null;
   state.pausedAt      = null;
   state.totalPausedMs = 0;
 
-  // Mostra tela de jogo
   document.getElementById('screen-welcome').classList.remove('active');
   document.getElementById('screen-game').classList.add('active');
 
@@ -917,7 +1042,6 @@ function startGame(name) {
   updateInfoBar();
   buildStrip();
   startIdle();
-  // startTimer() é chamado no primeiro doSpin()
   setSpinButtonEnabled(true);
   hideResultControls();
 }
@@ -930,7 +1054,6 @@ function returnToWelcome() {
   document.getElementById('screen-game').classList.remove('active');
   document.getElementById('screen-welcome').classList.add('active');
 
-  // Fecha todos os modais
   ['modal-ranking', 'modal-history', 'modal-gameover', 'modal-wrong'].forEach(closeModal);
 }
 
@@ -940,7 +1063,6 @@ function returnToWelcome() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ----- Tela de boas-vindas -----
   const inputName = document.getElementById('player-name');
   const btnStart  = document.getElementById('btn-start');
 
@@ -957,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Bloqueia nome duplicado no ranking
     const ranking = loadRanking();
     const exists  = ranking.find(r => r.name.toLowerCase() === name.toLowerCase());
     if (exists) {
@@ -977,31 +1098,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('btn-ranking-welcome').addEventListener('click', () => {
-    document.getElementById('tab-ranking').classList.add('active');
-    document.getElementById('tab-stats').classList.remove('active');
-    document.getElementById('ranking-body').classList.remove('hidden');
-    document.getElementById('stats-body').classList.add('hidden');
     renderRanking();
     openModal('modal-ranking');
   });
 
-  // ----- Abas do modal Ranking/Estatísticas -----
-  document.getElementById('tab-ranking').addEventListener('click', () => {
-    document.getElementById('tab-ranking').classList.add('active');
-    document.getElementById('tab-stats').classList.remove('active');
-    document.getElementById('ranking-body').classList.remove('hidden');
-    document.getElementById('stats-body').classList.add('hidden');
-    renderRanking();
-  });
-  document.getElementById('tab-stats').addEventListener('click', () => {
-    document.getElementById('tab-stats').classList.add('active');
-    document.getElementById('tab-ranking').classList.remove('active');
-    document.getElementById('stats-body').classList.remove('hidden');
-    document.getElementById('ranking-body').classList.add('hidden');
-    renderStats();
-  });
-
-  // ----- Header do jogo -----
   document.getElementById('btn-sound').addEventListener('click', () => {
     state.soundEnabled = !state.soundEnabled;
     const btn = document.getElementById('btn-sound');
@@ -1009,18 +1109,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.classList.toggle('muted', !state.soundEnabled);
   });
 
-  // btn-stats, btn-history-btn e btn-ranking-game removidos da barra superior
-
-  // ----- Roleta -----
   document.getElementById('btn-spin').addEventListener('click', () => {
     if (state.remaining.length === 0) { showGameOver(); return; }
     doSpin();
   });
 
-  // ----- Revelar nome da bandeira -----
   document.getElementById('btn-reveal').addEventListener('click', () => {
     if (state.revealed) return;
     state.revealed = true;
+    pauseTimer();
 
     document.getElementById('country-name-blur').classList.add('hidden');
     const reveal = document.getElementById('country-name-reveal');
@@ -1036,7 +1133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-wrong').disabled   = false;
   });
 
-  // ----- Controles de resultado -----
   document.getElementById('btn-correct').addEventListener('click', () => {
     if (!state.revealed || state.answered) return;
     state.answered = true;
@@ -1060,8 +1156,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '✅ Acerto registrado!';
     fb.className = 'answer-feedback-inline is-correct';
-    document.getElementById('btn-spin-again').disabled = false;
-    document.getElementById('btn-spin-again').classList.remove('hidden');
+
+    if (state.remaining.length === 0) {
+      setTimeout(() => showGameOver(), 600);
+    } else {
+      const btnReveal = document.getElementById('btn-reveal');
+      btnReveal.textContent = '🎰 Girar novamente';
+      btnReveal.classList.remove('revealed');
+      btnReveal.classList.add('btn-spin-inline');
+      btnReveal.disabled = false;
+      btnReveal.onclick = () => doSpin();
+    }
   });
 
   document.getElementById('btn-wrong').addEventListener('click', () => {
@@ -1085,27 +1190,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '❌ Erro registrado!';
     fb.className = 'answer-feedback-inline is-wrong';
-    // btn-spin-again NÃO é liberado em caso de erro
 
-    // Modal com estatísticas + comparativo
     setTimeout(() => { renderWrongModal(); openModal('modal-wrong'); }, 450);
   });
 
-  // Girar novamente – gira direto sem precisar clicar em "Girar"
   document.getElementById('btn-spin-again').addEventListener('click', () => {
     doSpin();
   });
 
-  // Botão de troca de jogador removido
-
-  // "Fechar e continuar" no modal de erro – salva e volta ao menu
   document.getElementById('btn-wrong-close').addEventListener('click', () => {
     closeModal('modal-wrong');
     if (state.playerName) updateRanking();
     returnToWelcome();
   });
 
-  // Resetar todos os dados
   document.getElementById('btn-reset').addEventListener('click', () => {
     if (confirm('⚠️ Tem certeza? Isso apagará TODO o ranking e dados de TODOS os jogadores permanentemente!')) {
       localStorage.removeItem(LS_KEY);
@@ -1113,13 +1211,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ----- Botões de fechar modal (overlay e ✕) -----
   document.addEventListener('click', e => {
     const closeTarget = e.target.dataset.close;
     if (closeTarget) closeModal(closeTarget);
   });
 
-  // ----- Fim de jogo -----
   document.getElementById('btn-play-again').addEventListener('click', () => {
     closeModal('modal-gameover');
     returnToWelcome();
@@ -1127,22 +1223,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-gameover-ranking').addEventListener('click', () => {
     closeModal('modal-gameover');
-    document.getElementById('tab-ranking').classList.add('active');
-    document.getElementById('tab-stats').classList.remove('active');
-    document.getElementById('ranking-body').classList.remove('hidden');
-    document.getElementById('stats-body').classList.add('hidden');
     renderRanking();
     openModal('modal-ranking');
   });
 
-  // ----- Ajuste ao redimensionar (atualiza posição) -----
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       if (document.getElementById('screen-game').classList.contains('active')) {
-        // Recalcula posição mantendo offset proporcional
-        const containerW = getContainerWidth();
         setTrackOffset(currentOffset);
       }
     }, 200);
