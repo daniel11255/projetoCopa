@@ -495,7 +495,7 @@ function doSpin() {
   const startOffset = currentOffset;
   const targetOffset = findTargetOffset(winner);
   const totalDelta = targetOffset - startOffset;
-  const DURATION = 5000; // ms
+  const DURATION = 500; // ms
   const startTime = performance.now();
 
   function frame(now) {
@@ -582,10 +582,10 @@ function showResultControls() {
   document.getElementById('btn-correct').disabled = true;
   document.getElementById('btn-wrong').disabled   = true;
 
-  // Girar novamente bloqueado até responder
+  // Girar novamente só aparece após "Acertou" – mantém oculto até lá
   const spinAgainBtn = document.getElementById('btn-spin-again');
   spinAgainBtn.disabled = true;
-  spinAgainBtn.classList.remove('hidden');
+  spinAgainBtn.classList.add('hidden');
 
   // Oculta feedback anterior
   const fb = document.getElementById('answer-feedback');
@@ -953,17 +953,20 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Verifica nome duplicado no ranking
+    // Bloqueia nome duplicado no ranking
     const ranking = loadRanking();
     const exists  = ranking.find(r => r.name.toLowerCase() === name.toLowerCase());
     if (exists) {
-      const continuar = confirm(
-        `⚠️ O nome "${name}" já existe no ranking.\n\nDeseja continuar jogando como "${name}"?\n(Seus acertos serão somados ao histórico existente)\n\nClique em Cancelar para escolher outro nome.`
-      );
-      if (!continuar) {
-        inputName.select();
-        return;
-      }
+      inputName.style.borderColor = '#e74c3c';
+      const errEl = document.getElementById('name-error');
+      errEl.textContent = `❌ O nome "${name}" já existe no ranking. Escolha um nome diferente.`;
+      errEl.classList.remove('hidden');
+      inputName.select();
+      setTimeout(() => {
+        inputName.style.borderColor = '';
+        errEl.classList.add('hidden');
+      }, 3000);
+      return;
     }
 
     startGame(name);
@@ -1002,29 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.classList.toggle('muted', !state.soundEnabled);
   });
 
-  document.getElementById('btn-stats').addEventListener('click', () => {
-    // Abre modal-ranking na aba Estatísticas
-    document.getElementById('tab-stats').classList.add('active');
-    document.getElementById('tab-ranking').classList.remove('active');
-    document.getElementById('stats-body').classList.remove('hidden');
-    document.getElementById('ranking-body').classList.add('hidden');
-    renderStats();
-    openModal('modal-ranking');
-  });
-
-  document.getElementById('btn-history-btn').addEventListener('click', () => {
-    renderHistory();
-    openModal('modal-history');
-  });
-
-  document.getElementById('btn-ranking-game').addEventListener('click', () => {
-    document.getElementById('tab-ranking').classList.add('active');
-    document.getElementById('tab-stats').classList.remove('active');
-    document.getElementById('ranking-body').classList.remove('hidden');
-    document.getElementById('stats-body').classList.add('hidden');
-    renderRanking();
-    openModal('modal-ranking');
-  });
+  // btn-stats, btn-history-btn e btn-ranking-game removidos da barra superior
 
   // ----- Roleta -----
   document.getElementById('btn-spin').addEventListener('click', () => {
@@ -1076,6 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fb.textContent = '✅ Acerto registrado!';
     fb.className = 'answer-feedback-inline is-correct';
     document.getElementById('btn-spin-again').disabled = false;
+    document.getElementById('btn-spin-again').classList.remove('hidden');
   });
 
   document.getElementById('btn-wrong').addEventListener('click', () => {
@@ -1099,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fb = document.getElementById('answer-feedback');
     fb.textContent = '❌ Erro registrado!';
     fb.className = 'answer-feedback-inline is-wrong';
-    document.getElementById('btn-spin-again').disabled = false;
+    // btn-spin-again NÃO é liberado em caso de erro
 
     // Modal com estatísticas + comparativo
     setTimeout(() => { renderWrongModal(); openModal('modal-wrong'); }, 450);
@@ -1110,13 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     doSpin();
   });
 
-  // Novo jogador (header) – salva ranking antes de sair
-  document.getElementById('btn-new-player').addEventListener('click', () => {
-    if (confirm('Deseja trocar de jogador? Seu progresso será salvo no ranking.')) {
-      if (state.playerName) updateRanking();
-      returnToWelcome();
-    }
-  });
+  // Botão de troca de jogador removido
 
   // "Fechar e continuar" no modal de erro – salva e volta ao menu
   document.getElementById('btn-wrong-close').addEventListener('click', () => {
