@@ -551,6 +551,7 @@ function setSpinButtonEnabled(enabled) {
 function hideResultControls() {
   document.getElementById('result-controls').classList.add('hidden');
   document.getElementById('game-controls').classList.remove('hidden');
+  document.getElementById('btn-spin-again').classList.add('hidden');
 }
 
 function showResultControls() {
@@ -581,7 +582,9 @@ function showResultControls() {
   document.getElementById('btn-wrong').disabled   = true;
 
   // Girar novamente bloqueado até responder
-  document.getElementById('btn-spin-again').disabled = true;
+  const spinAgainBtn = document.getElementById('btn-spin-again');
+  spinAgainBtn.disabled = true;
+  spinAgainBtn.classList.remove('hidden');
 
   // Oculta feedback anterior
   const fb = document.getElementById('answer-feedback');
@@ -968,6 +971,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-ranking-welcome').addEventListener('click', () => {
     renderRanking();
     openModal('modal-ranking');
+  });
+
+  // ----- Abas do modal Ranking/Estatísticas -----
+  document.getElementById('tab-ranking').addEventListener('click', () => {
+    document.getElementById('tab-ranking').classList.add('active');
+    document.getElementById('tab-stats').classList.remove('active');
+    document.getElementById('ranking-body').classList.remove('hidden');
+    document.getElementById('stats-body').classList.add('hidden');
+    renderRanking();
+  });
+  document.getElementById('tab-stats').addEventListener('click', () => {
+    document.getElementById('tab-stats').classList.add('active');
+    document.getElementById('tab-ranking').classList.remove('active');
+    document.getElementById('stats-body').classList.remove('hidden');
+    document.getElementById('ranking-body').classList.add('hidden');
+    renderStats();
   });
 
   // ----- Header do jogo -----
